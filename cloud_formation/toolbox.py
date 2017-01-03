@@ -1,12 +1,12 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 # Strongly based on Tampere University of Technology course FYS-1320 example code
 
+# This toolbox utilises MATLAB Engine API for Python, since we couldn't translate some of the necessary code to Python
+# https://se.mathworks.com/help/matlab/matlab-engine-for-python.html
 # Must be imported first to prevent errors
 import matlab.engine
 
 import numpy as np
-import sympy
-import sympy.solvers
 import scipy.optimize
 import scipy.special
 
@@ -151,7 +151,7 @@ def mie(m, x):
         #  TODO
     """
 
-    return matlabeng.Mie(m, x)
+    return matlabeng.Mie(complex(m), float(x))[0]
 
 
 def mie_abcd(m, x):
@@ -224,6 +224,7 @@ def solve_growth(T, D, M, L, ka, rho, gamma, Ntot, tmax, dp0, p0):
     t = np.array(result[0])
     dp = np.array(result[1])
     pw = np.array(result[2])
+
     t = t.transpose()[0]
     dp = dp.transpose()[0]
     pw = pw.transpose()[0]

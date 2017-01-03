@@ -1,5 +1,5 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
-# Strongly based on Tampere University of Technology course FYS-1320 example code
+# Strongly based on Tampere University of Technology course FYS-1320 ESIMERKKI_dp.m by Joni Kalliokoski 2014-08-14
 
 import toolbox
 # import pyqtgraph as pg
