@@ -242,4 +242,5 @@ def water_pvap(T):
     :param T: temperature (K)
     :return: vapor pressure of water (Pa)
     """
+    # This is the same function as on the page 4 of project instructions
     return np.exp(77.34491296-7235.424651/T-8.2*np.log(T)+0.0057113*T)
