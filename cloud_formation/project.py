@@ -34,9 +34,9 @@ p0 = 1.2*toolbox.water_pvap(temp)
 # Molar volume of water
 v_mol = m_mol / rho_wat
 
-
+# Particle initialisation
 particle_sizes = np.array([5, 10, 20, 50, 100])*studnum_a*1e-9
-print("Particle diameters")
+print("Particle diameters (m)")
 print(particle_sizes)
 
 
@@ -82,6 +82,8 @@ def p_d(p_s, nu, gamma, r, t, d_p):
 # -----
 
 
+# 5)
+
 def saturation_ratio(nu, gamma, r, t, d_p):
     """
     Compute the saturation ratio S_R = p_d/p_s for particles of given diameter
@@ -95,13 +97,20 @@ def saturation_ratio(nu, gamma, r, t, d_p):
     return np.exp((4 * nu * gamma) / (r * t * d_p))
 
 saturation_ratios = saturation_ratio(v_mol, surface_tension, r, temp, particle_sizes)
-print("Saturation ratios")
+print("Saturation (=pressure) ratios")
 print(saturation_ratios)
 
+print("Saturation partial pressure of water at room temperature (Pa)")
+print(toolbox.water_pvap(temp))
 
-particle_sizes_for8 = np.array([5, 10, 20])*studnum_a*1e-9
+part_pressures_on_particles = saturation_ratios*toolbox.water_pvap(temp)
+print("Partial pressures on particle surfaces (Pa)")
+print(part_pressures_on_particles)
+
 
 # 8)
+particle_sizes_for8 = np.array([5, 10, 20])*studnum_a*1e-9
+
 # Compute particle growth
 t_5, dp_5, pw_5 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, particle_sizes_for8[0], p0)
 t_10, dp_10, pw_10 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, particle_sizes_for8[1], p0)
