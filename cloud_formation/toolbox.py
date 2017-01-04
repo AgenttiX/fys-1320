@@ -3,6 +3,10 @@
 
 # This toolbox utilises MATLAB Engine API for Python, since we couldn't translate some of the necessary code to Python
 # https://se.mathworks.com/help/matlab/matlab-engine-for-python.html
+# For Ubuntu the installation would be something like
+# cd /usr/local/MATLAB/R2016b/extern/engines/python
+# sudo python3 setup.py install
+
 # Must be imported first to prevent errors
 import matlab.engine
 
