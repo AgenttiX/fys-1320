@@ -11,6 +11,8 @@ passionately hate MATLAB, we chose to utilise Python instead.
 import toolbox
 import numpy as np
 import pyqtgraph as pg
+import time
+import scipy.interpolate
 
 # This is a value computed from our student numbers
 studnum_a = 3
@@ -27,6 +29,8 @@ thermal_con_air = 0.0257    # Thermal conductivity of air (W/(m*K))
 rho_air = 1000              # Air density (kg/m^3)
 particle_dens = 1e4         # particle density (#/m^3)
 tmax = 4                    # The maximum time up which to compute to (s)
+heat_capacity_ratio = 1.4   # For (dry) air, from https://en.wikipedia.org/wiki/Heat_capacity_ratio
+
 
 # Initial partial pressure for water
 p0 = 1.2*toolbox.water_pvap(temp)
@@ -39,73 +43,76 @@ particle_sizes = np.array([5, 10, 20, 50, 100])*studnum_a*1e-9
 print("Particle diameters (m)")
 print(particle_sizes)
 
-
-# ----- USELESS -----
-
-# Equation 17-1
-def p_s(t, a, b, c):
-    """
-
-    :param t: temperature (K)
-    :param a: constant from table 17-1
-    :param b: constant from table 17-1
-    :param c: constant from table 17-1
-    :return: vapor pressure at the saturation or equilibrium condition
-    """
-    return 10**(a - b / (t - c))
-
-"""
-# Equation 17-2
-def p_s_eq17_2(t, b, c):
-    return 10**((-52.3*b)/t + c)
-"""
-
 # AM_ch17.pdf table 17-1 data for water
 water_a = 10.23
 water_b = 1750
 water_c = 38
 
-# Equation 17-3
-def p_d(p_s, nu, gamma, r, t, d_p):
-    """
-    vapor pressure at the saturation on equilibrium condition for particles of this size
-    :param p_s: vapor pressure at the saturation on equilibrium condition
-    :param nu: molar volume of the liquid
-    :param gamma: surface tension
-    :param r: gas constant
-    :param t: temperature
-    :param d_p: particle diameter
-    :return:
-    """
-    return p_s * np.exp((4*nu*gamma)/(r*t*d_p))
 
-# -----
+# Initialise figure environment
+app = pg.mkQApp()
+win = pg.GraphicsWindow(title="Cloud formation")
+# win.setWindowTitle("Cloud formation")
+pg.setConfigOptions(antialias=True)
 
 
 # 5)
 
-def saturation_ratio(nu, gamma, r, t, d_p):
-    """
-    Compute the saturation ratio S_R = p_d/p_s for particles of given diameter
-    :param nu: molar volume of the liquid
-    :param gamma: surface tension
-    :param r: gas constant
-    :param t: temperature
-    :param d_p: particle diameter
-    :return: saturation ratio
-    """
-    return np.exp((4 * nu * gamma) / (r * t * d_p))
-
-saturation_ratios = saturation_ratio(v_mol, surface_tension, r, temp, particle_sizes)
+print()
+saturation_ratios = toolbox.saturation_ratio(v_mol, surface_tension, r, temp, particle_sizes)
 print("Saturation (=pressure) ratios")
 print(saturation_ratios)
 
+print()
+print("Relative humidity (%)")
+print(saturation_ratios*100)
+
+print()
 print("Saturation partial pressure of water at room temperature (Pa)")
 print(toolbox.water_pvap(temp))
 
+print()
 part_pressures_on_particles = saturation_ratios*toolbox.water_pvap(temp)
 print("Partial pressures on particle surfaces (Pa)")
 print(part_pressures_on_particles)
+
+
+def pressure_difference(nu, gamma, r, t, d_p, p_s):
+    return (np.exp((4 *nu*gamma)/(r*t*d_p)) - 1)*p_s
+
+print()
+pressure_differences = pressure_difference(v_mol, surface_tension, r, temp, particle_sizes, toolbox.water_pvap(temp))
+print("Pressure differences (Pa)")
+print(pressure_differences)
+
+# 7)
+
+final_pressure = 99000  # Pa
+
+
+def particle_diameter_withvalues(p_i):
+    return toolbox.minimum_particle_diameter_2(p_i, final_pressure, temp, heat_capacity_ratio, water_a, water_b, water_c, m_mol, surface_tension, rho_wat)
+
+# Draw a figure
+init_pressure_vec = np.arange(99050, 130000)
+min_dp_vec = particle_diameter_withvalues(init_pressure_vec)
+
+# print(min_dp_vec)
+
+plot_dp_by_pi = win.addPlot(title="d_p (m) py P_i (Pa)")
+plot_dp_by_pi.plot(init_pressure_vec, min_dp_vec)
+
+# Compute intersections by interpolation
+# init_pressures_for_particles = scipy.optimize.fixed_point(particle_diameter_withvalues, particle_sizes)
+
+init_pressures_for_particles = np.interp(particle_sizes, np.flipud(min_dp_vec), np.flipud(init_pressure_vec), left=-1, right=-2)
+
+# print()
+# print(min_dp_vec)
+
+print()
+print("Initial pressures for our particles")
+print(init_pressures_for_particles)
 
 
 # 8)
@@ -116,21 +123,21 @@ t_5, dp_5, pw_5 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_ai
 t_10, dp_10, pw_10 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, particle_sizes_for8[1], p0)
 t_20, dp_20, pw_20 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, particle_sizes_for8[2], p0)
 
-# Draw figures
-app = pg.mkQApp()
-win = pg.GraphicsWindow(title="example_dp")
-win.setWindowTitle("example_dp")
-pg.setConfigOptions(antialias=True)
 
-p1 = win.addPlot(title="d_p (m)")
-p1.plot(t_5, dp_5, pen=(255,0,0))
-p1.plot(t_10, dp_10,pen=(0,255,0))
-p1.plot(t_20, dp_20, pen=(0,0,255))
-p2 = win.addPlot(title="P_w (Pa)")
-p2.plot(t_5, pw_5, pen=(255,0,0))
-p2.plot(t_10, pw_10, pen=(0,255,0))
-p2.plot(t_20, pw_20, pen=(0,0,255))
+# Particle diameter
+plot_dp = win.addPlot(title="d_p (m) by t (s)")
+plot_dp.plot(t_5, dp_5, pen=(255,0,0))
+plot_dp.plot(t_10, dp_10,pen=(0,255,0))
+plot_dp.plot(t_20, dp_20, pen=(0,0,255))
+
+# Partial pressure of water
+plot_pw = win.addPlot(title="p_w (Pa) by t(s)")
+plot_pw.plot(t_5, pw_5, pen=(255,0,0))
+plot_pw.plot(t_10, pw_10, pen=(0,255,0))
+plot_pw.plot(t_20, pw_20, pen=(0,0,255))
 
 app.exec_()
 
-#Turha kommentti
+# This prevents a segmentation fault
+# Don't ask us why
+time.sleep(1)

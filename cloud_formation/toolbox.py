@@ -16,6 +16,9 @@ matlabeng = matlab.engine.start_matlab()
 R = 8.3144621
 
 
+# ----- Based on Tampere University of Technology course FYS-1320 example code -----
+# Not all of the functions have been tested
+
 def dp_growth_rate(dp, T, rho, gamma, M, D, p, Td):
     """
     Based on dp_growth_rate.m by Joni Kalliokoski 2014-08-13
@@ -244,3 +247,69 @@ def water_pvap(T):
     """
     # This is the same function as on the page 4 of project instructions
     return np.exp(77.34491296-7235.424651/T-8.2*np.log(T)+0.0057113*T)
+
+
+# ----- Our own functions -----
+
+def saturation_ratio(nu, gamma, r, t, d_p):
+    """
+    Compute the saturation ratio S_R = p_d/p_s for particles of given diameter
+    :param nu: molar volume of the liquid
+    :param gamma: surface tension
+    :param r: gas constant
+    :param t: temperature
+    :param d_p: particle diameter
+    :return: saturation ratio
+    """
+    return np.exp((4 * nu * gamma) / (r * t * d_p))
+
+
+def saturation_pressure(t, a, b, c):
+    """
+    :param t: temperature (K)
+    :param a: constant from table 17-1
+    :param b: constant from table 17-1
+    :param c: constant from table 17-1
+    :return: vapor pressure at the saturation or equilibrium condition
+    """
+    return 10**(a - b / (t - c))
+
+
+def final_temp(t_i, p_f, p_i, gamma):
+    """
+    Computes the final temperature of adiabatic expansion
+    :param t_i: initial temperature (K)
+    :param p_f: total final pressure
+    :param p_i: total initial pressure
+    :param gamma: heat capacity ratio ("adiabaattivakio")
+    :return: final temperature (K)
+    """
+    return t_i * (p_f / p_i)**((gamma-1)/gamma)
+
+
+def minimum_particle_diameter(m, gamma, rho, t_f, s_r):
+    """
+
+    :param m: molar mass
+    :param gamma: surface tension
+    :param rho: density
+    :param t_f: (final) temperature
+    :param s_r: saturation ratio
+    :return:
+    """
+    return (4 * m * gamma) / (rho * R * t_f * np.log(s_r))
+
+
+def minimum_particle_diameter_2(p_i, p_f, t_i, heat_capacity_ratio, a, b, c, m_mol, surface_tension, rho):
+
+    t_f = final_temp(t_i, p_f, p_i, heat_capacity_ratio)
+    var_init_satur_press = saturation_pressure(t_i, a, b, c)
+    var_final_satur_press = saturation_pressure(t_f, a, b, c)
+
+    """
+    print("Final temperature:", t_f)
+    print("Initial saturation pressure:", var_init_satur_press)
+    print("Final saturation pressure:", var_final_satur_press)
+    """
+
+    return (4 * m_mol * surface_tension) / (rho * R * t_f * np.log((var_init_satur_press*p_f) / (var_final_satur_press * p_i)))
