@@ -31,8 +31,8 @@ for k in range(dp.size):
 #plt.show()
 
 
-sigma_ext=(np.pi*N*(dp*1e-9)**2*Qext)/4;   # dp in nanometers
-ext = 1- np.exp(-sigma_ext*L);
+sigma_ext=(np.pi*N*(dp*1e-9)**2*Qext)/4   # dp in nanometers
+ext = 1- np.exp(-sigma_ext*L)
 
 plt.plot(dp, ext)
 plt.show()

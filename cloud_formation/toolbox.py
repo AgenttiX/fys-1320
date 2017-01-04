@@ -7,6 +7,8 @@
 # cd /usr/local/MATLAB/R2016b/extern/engines/python
 # sudo python3 setup.py install
 
+# It also requires the example code files to be in the same folder as this file
+
 # Must be imported first to prevent errors
 import matlab.engine
 
@@ -317,3 +319,37 @@ def minimum_particle_diameter_2(p_i, p_f, t_i, heat_capacity_ratio, a, b, c, m_m
     """
 
     return (4 * m_mol * surface_tension) / (rho * R * t_f * np.log((var_init_satur_press*p_f) / (var_final_satur_press * p_i)))
+
+
+def q_ext(dp, m, wavelength):
+    """
+    Ekstinktiotehokkuus
+    :param dp: particle diameter (m)
+    :param m:
+    :param wavelength:
+    :return:
+    """
+    q_ext = np.zeros(dp.size)
+
+    for k in range(dp.size):
+        # 1e9 converts m to nm
+        q_ext_value = mie(m, np.pi*dp[k]*1e9 / wavelength)
+        q_ext[k] = q_ext_value[3]
+
+    return q_ext
+
+
+def extinction_factor(n, dp, q_ext):
+    """
+
+    :param n: particles in m^3
+    :param dp:
+    :param q_ext:
+    :return:
+    """
+    return (np.pi*n*(dp**2)*q_ext)/4
+
+
+def extinction(sigma_ext, length):
+    return 1 - np.exp(-sigma_ext*length)
+
