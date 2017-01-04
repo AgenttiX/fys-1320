@@ -27,13 +27,11 @@ rho_wat = 998.20            # Density of water (kg/m^3)
 evap_E = 2260e3             # Evaporation energy of water (J/kg)
 thermal_con_air = 0.0257    # Thermal conductivity of air (W/(m*K))
 rho_air = 1000              # Air density (kg/m^3)
-particle_dens = 1e4         # particle density (#/m^3)
-tmax = 4                    # The maximum time up which to compute to (s)
 heat_capacity_ratio = 1.4   # For (dry) air, from https://en.wikipedia.org/wiki/Heat_capacity_ratio
 
 
 # Initial partial pressure for water
-p0 = 1.2*toolbox.water_pvap(temp)
+# p0 = 1.2*toolbox.water_pvap(temp)
 
 # Molar volume of water
 v_mol = m_mol / rho_wat
@@ -57,6 +55,7 @@ pg.setConfigOptions(antialias=True)
 
 
 # 5)
+print("\n----- 5 -----")
 
 print()
 saturation_ratios = toolbox.saturation_ratio(v_mol, surface_tension, r, temp, particle_sizes)
@@ -86,6 +85,7 @@ print("Pressure differences (Pa)")
 print(pressure_differences)
 
 # 7)
+print("\n----- 7 -----")
 
 final_pressure = 99000  # Pa
 
@@ -94,10 +94,8 @@ def particle_diameter_withvalues(p_i):
     return toolbox.minimum_particle_diameter_2(p_i, final_pressure, temp, heat_capacity_ratio, water_a, water_b, water_c, m_mol, surface_tension, rho_wat)
 
 # Draw a figure
-init_pressure_vec = np.arange(99050, 130000)
+init_pressure_vec = np.arange(99050, 100500)
 min_dp_vec = particle_diameter_withvalues(init_pressure_vec)
-
-# print(min_dp_vec)
 
 plot_dp_by_pi = win.addPlot(title="d_p (m) py P_i (Pa)")
 plot_dp_by_pi.plot(init_pressure_vec, min_dp_vec)
@@ -105,23 +103,32 @@ plot_dp_by_pi.plot(init_pressure_vec, min_dp_vec)
 # Compute intersections by interpolation
 # init_pressures_for_particles = scipy.optimize.fixed_point(particle_diameter_withvalues, particle_sizes)
 
+# The derivative of the function must be positive, thereby np.flipud() is necessary
 init_pressures_for_particles = np.interp(particle_sizes, np.flipud(min_dp_vec), np.flipud(init_pressure_vec), left=-1, right=-2)
 
-# print()
-# print(min_dp_vec)
+print()
+print("Initial pressures for our particles (Pa)")
+print(init_pressures_for_particles)
 
 print()
-print("Initial pressures for our particles")
-print(init_pressures_for_particles)
+print("Pressure ratios for our particles (Pa)")
+print(final_pressure / init_pressures_for_particles)
+
+print()
+print("Pressure differences for our particles (Pa)")
+print(init_pressures_for_particles - final_pressure)
 
 
 # 8)
-particle_sizes_for8 = np.array([5, 10, 20])*studnum_a*1e-9
+# particle_sizes_for8 = np.array([5, 10, 20])*studnum_a*1e-9
+
+tmax = 4                    # The maximum time up which to compute to (s)
+particle_dens = 1e4         # particle density (#/m^3)
 
 # Compute particle growth
-t_5, dp_5, pw_5 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, particle_sizes_for8[0], p0)
-t_10, dp_10, pw_10 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, particle_sizes_for8[1], p0)
-t_20, dp_20, pw_20 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, particle_sizes_for8[2], p0)
+t_5, dp_5, pw_5 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[0])
+t_10, dp_10, pw_10 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[1])
+t_20, dp_20, pw_20 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[2])
 
 
 # Particle diameter
