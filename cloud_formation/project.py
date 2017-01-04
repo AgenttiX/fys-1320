@@ -132,3 +132,5 @@ p2.plot(t_10, pw_10, pen=(0,255,0))
 p2.plot(t_20, pw_20, pen=(0,0,255))
 
 app.exec_()
+
+#Turha kommentti
