@@ -11,7 +11,7 @@ This code calculates extinction (absorption) of cloud gas by function of water d
 
 """
 
-N = 10000*10^5      # assuming number concentration of 10000/cm^3 --> 10^9/m^3
+N = 10000*10e6      # assuming number concentration of 10000/cm^3 --> 10^9/m^3
 L = 1               # length of a pipe, assuming "about a meter" is a meter (Opintomoniste)
 
 
