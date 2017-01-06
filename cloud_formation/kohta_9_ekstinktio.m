@@ -1,3 +1,10 @@
+% Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
+
+% Licensed with Creative Commons Attribution 4.0 International
+% https://creativecommons.org/licenses/by/4.0/
+% However, the license of the example code our work is based on is unclear and thereby so is the license
+% for those parts of this code that are based on it
+
 %9) ekstinkiton eli vaimenemisen laskeminen hiukkaskoon funktiona
 
 N = 10000*10^5     % oletetaan että pitoisuus 10000/cm^3 -->10^9/m^3
