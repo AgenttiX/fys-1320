@@ -2,6 +2,11 @@
 # Strongly based on:
 # Tampere University of Technology course FYS-1320 ESIMERKKI_EKSTINKTIOTEHOKKUUS.m by Joni Kalliokoski 2014-09-09
 
+# Our work is licensed with Creative Commons Attribution 4.0 International
+# https://creativecommons.org/licenses/by/4.0/
+# However, the license of the example code our work is based on is unclear and thereby so is the license
+# for those parts of this code that are based on it
+
 import toolbox
 import numpy as np
 import matplotlib.pyplot as plt

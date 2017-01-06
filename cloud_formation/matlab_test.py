@@ -1,5 +1,7 @@
 # This file is simply for testing, whether Matlab API for Python works correctly
 # It should run without any output or errors
 
+# Public domain
+
 import matlab.engine
 matlabeng = matlab.engine.start_matlab()

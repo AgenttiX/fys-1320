@@ -1,6 +1,11 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 # Strongly based on Tampere University of Technology course FYS-1320 ESIMERKKI_interp.m by Sampo Saari 2014-10-14
 
+# Our work is licensed with Creative Commons Attribution 4.0 International
+# https://creativecommons.org/licenses/by/4.0/
+# However, the license of the example code our work is based on is unclear and thereby so is the license
+# for those parts of this code that are based on it
+
 import numpy as np
 import matplotlib.pyplot as plt
 # import sympy
@@ -23,6 +28,10 @@ plt.plot(x_vec, y_vec)
 # Interpolate x at y=200 using the vectors
 y_val = 200
 x_val = np.interp(y_val, y_vec, x_vec)
+
+# If you want to get rid of the PyCharm "Expected type 'Union[ndarray, iterable]', got 'int' instead" warning, you
+# can use this version instead, but then the np.interp function returns the float within a list
+# x_val = np.interp([y_val], y_vec, x_vec)
 
 print(x_val)
 

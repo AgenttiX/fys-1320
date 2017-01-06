@@ -1,6 +1,11 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 # Strongly based on Tampere University of Technology course FYS-1320 example code
 
+# Our work is licensed with Creative Commons Attribution 4.0 International
+# https://creativecommons.org/licenses/by/4.0/
+# However, the license of the example code our work is based on is unclear and thereby so is the license
+# for those parts of this code that are based on it
+
 # This toolbox utilises MATLAB Engine API for Python, since we couldn't translate some of the necessary code to Python
 # https://se.mathworks.com/help/matlab/matlab-engine-for-python.html
 # For Ubuntu the installation would be something like
@@ -131,7 +136,7 @@ def kelvin_ratio(dp, T, rho, gamma, M):
     :param M: molar mass (kg/mol)
     :return:
     """
-    kr = np.exp((4*M*gamma)/(rho*R*T*dp))
+    return np.exp((4*M*gamma)/(rho*R*T*dp))
 
 
 def mie(m, x):
@@ -141,6 +146,9 @@ def mie(m, x):
     :param x:
     :return:
     """
+
+    # The Mie.m fits this description quite nicely, so we didn't bother translating it to Python
+    # https://xkcd.com/1513/
 
     """
     # Avoid singularity at x=0
@@ -171,6 +179,9 @@ def mie_abcd(m, x):
     :return:
     """
 
+    # The mie_abcd.m fits this description quite nicely, so we didn't bother translating it to Python
+    # https://xkcd.com/1513/
+
     """
     nmax = round(2+x+4*(x**(1/3)))
     n = np.arange(1, nmax+1)
@@ -191,7 +202,7 @@ def mie_abcd(m, x):
     # TODO
     """
 
-    return matlabeng.mie_abcd(m, x)
+    return matlabeng.mie_abcd(complex(m), float(x))
 
 
 def p_growth_rate(T, rho, Ntot, dp, ddpdt, M):
