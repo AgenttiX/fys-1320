@@ -13,6 +13,8 @@ https://www.gnu.org/education/edu-why.html
 
 Licensed with Creative Commons Attribution 4.0 International
 https://creativecommons.org/licenses/by/4.0/
+
+An improved version of this program can be found with the name project_mod.py
 """
 
 

@@ -13,6 +13,9 @@ https://www.gnu.org/education/edu-why.html
 
 Licensed with Creative Commons Attribution 4.0 International
 https://creativecommons.org/licenses/by/4.0/
+
+This version is modified from project.py so, that the figures are suitable for use in our pre-report
+(black text on white background etc.)
 """
 
 
@@ -31,7 +34,7 @@ studnum_a = 3
 # Constants
 temp = 296.15               # 23 deg C, from instructions
 diff = 0.282e-4             # Diffusion coefficient for water (m^2/s)
-r = 8.3144621               # (Pa*m^3)/(mol*K), from example code
+gas_const = 8.3144621               # (Pa*m^3)/(mol*K), from example code
 surface_tension = 27.8e-3   # (N/m), From example code
 m_mol = 18.016e-3           # Molar mass of water (kg/mol)
 rho_wat = 998.20            # Density of water (kg/m^3)
@@ -72,12 +75,11 @@ pg.setConfigOptions(antialias=True)
 # win.setBackground([255,255,255,255])
 
 
-
 # 5)
 print("\n----- 5 -----")
 
 print()
-saturation_ratios = toolbox.saturation_ratio(v_mol, surface_tension, r, temp, particle_sizes)
+saturation_ratios = toolbox.saturation_ratio(v_mol, surface_tension, gas_const, temp, particle_sizes)
 print("Saturation (=pressure) ratios")
 print(saturation_ratios)
 
@@ -96,10 +98,11 @@ print(part_pressures_on_particles)
 
 
 def pressure_difference(nu, gamma, r, t, d_p, p_s):
-    return (np.exp((4 *nu*gamma)/(r*t*d_p)) - 1)*p_s
+    return (np.exp((4*nu*gamma)/(r*t*d_p)) - 1)*p_s
 
 print()
-pressure_differences = pressure_difference(v_mol, surface_tension, r, temp, particle_sizes, toolbox.water_pvap(temp))
+pressure_differences = pressure_difference(v_mol, surface_tension, gas_const, temp,
+                                           particle_sizes, toolbox.water_pvap(temp))
 print("Pressure differences (Pa)")
 print(pressure_differences)
 
@@ -110,22 +113,24 @@ final_pressure = 99000  # Pa
 
 
 def particle_diameter_withvalues(p_i):
-    return toolbox.minimum_particle_diameter_2(p_i, final_pressure, temp, heat_capacity_ratio, water_a, water_b, water_c, m_mol, surface_tension, rho_wat)
+    return toolbox.minimum_particle_diameter_2(p_i, final_pressure, temp, heat_capacity_ratio,
+                                               water_a, water_b, water_c, m_mol, surface_tension, rho_wat)
 
 # Draw a figure
 init_pressure_vec = np.arange(99050, 100500)
 min_dp_vec = particle_diameter_withvalues(init_pressure_vec)
 
 plot_dp_by_pi = win.addPlot()
-plot_dp_by_pi.plot(init_pressure_vec, min_dp_vec, pen=pg.mkPen((0,0,255), width=1.5))
+plot_dp_by_pi.plot(init_pressure_vec, min_dp_vec, pen=pg.mkPen((0, 0, 255), width=1.5))
 plot_dp_by_pi.setLabel("left", "dₚ", "m")
-plot_dp_by_pi.setLabel("bottom","Pᵢ", "Pa")
+plot_dp_by_pi.setLabel("bottom", "Pᵢ", "Pa")
 
 # Compute intersections by interpolation
 # init_pressures_for_particles = scipy.optimize.fixed_point(particle_diameter_withvalues, particle_sizes)
 
 # The derivative of the function must be positive, thereby np.flipud() is necessary
-init_pressures_for_particles = np.interp(particle_sizes, np.flipud(min_dp_vec), np.flipud(init_pressure_vec), left=-1, right=-2)
+init_pressures_for_particles = np.interp(particle_sizes, np.flipud(min_dp_vec),
+                                         np.flipud(init_pressure_vec), left=-1, right=-2)
 
 print()
 print("Initial pressures for our particles (Pa)")
@@ -147,29 +152,32 @@ tmax = 4                    # The maximum time up which to compute to (s)
 particle_dens = 1e4         # particle density (#/cm^3)
 
 # Compute particle growth
-t_5, dp_5, pw_5 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[0])
-t_10, dp_10, pw_10 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[1])
-t_20, dp_20, pw_20 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension, particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[2])
+t_5, dp_5, pw_5 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension,
+                                       particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[0])
+t_10, dp_10, pw_10 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension,
+                                          particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[1])
+t_20, dp_20, pw_20 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension,
+                                          particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[2])
 
 
 # Particle diameter
 plot_dp = win.addPlot()
-plot_dp.addLegend()       #Legend must be initialized before plotting
-plot_dp.plot(t_5, dp_5, pen=pg.mkPen((255,0,0), width=1.5), name="5*a")
-plot_dp.plot(t_10, dp_10, pen=pg.mkPen((0,255,0), width=1.5), name="10*a")
-plot_dp.plot(t_20, dp_20, pen=pg.mkPen((0,0,255), width=1.5), name="20*a")
+plot_dp.addLegend()     # Legend must be initialized before plotting
+plot_dp.plot(t_5, dp_5, pen=pg.mkPen((255, 0, 0), width=1.5), name="5*a")
+plot_dp.plot(t_10, dp_10, pen=pg.mkPen((0, 255, 0), width=1.5), name="10*a")
+plot_dp.plot(t_20, dp_20, pen=pg.mkPen((0, 0, 255), width=1.5), name="20*a")
 plot_dp.setLabel("left", "dₚ", "m")
-plot_dp.setLabel("bottom","t", "s")
+plot_dp.setLabel("bottom", "t", "s")
 
 # Partial pressure of water
 plot_pw = win.addPlot()
 plot_pw.addLegend()
-plot_pw.plot(t_5, pw_5, pen=pg.mkPen((255,0,0), width=1.5), name="5*a")
-plot_pw.plot(t_10, pw_10, pen=pg.mkPen((0,255,0), width=1.5), name="10*a")
-plot_pw.plot(t_20, pw_20, pen=pg.mkPen((0,0,255), width=1.5), name="20*a")
+plot_pw.plot(t_5, pw_5, pen=pg.mkPen((255, 0, 0), width=1.5), name="5*a")
+plot_pw.plot(t_10, pw_10, pen=pg.mkPen((0, 255, 0), width=1.5), name="10*a")
+plot_pw.plot(t_20, pw_20, pen=pg.mkPen((0, 0, 255), width=1.5), name="20*a")
 # changed p_w to p_s (or pₛ), because there doesn't exist unicode subsript for w
 plot_pw.setLabel("left", "pₛ", "Pa")
-plot_pw.setLabel("bottom","t", "s")
+plot_pw.setLabel("bottom", "t", "s")
 
 win.nextRow()
 
@@ -177,9 +185,9 @@ win.nextRow()
 # 9)
 # print("\n----- 9 -----")
 
-m = 1.33 + 0.001
-wavelength = 635
-length = 1  # (m)
+m = 1.33 + 0.001    # Refractive index of water
+wavelength = 635    # Wavelength of our laser
+length = 1          # (m)
 
 # Let's presume that N = 10 000
 n_extinction = 10000*1e6    # #/m^3
@@ -192,10 +200,10 @@ dp_log = np.logspace(1, 5, 1000)*1e-9
 q_ext = toolbox.q_ext(dp_log, m, wavelength)
 
 plot_q_ext = win.addPlot()
-plot_q_ext.plot(dp_log, q_ext, pen=pg.mkPen((0,0,255), width=1.5))
+plot_q_ext.plot(dp_log, q_ext, pen=pg.mkPen((0, 0, 255), width=1.5))
 plot_q_ext.setLogMode(x=True, y=False)
 plot_q_ext.setLabel("left", "Qₑₓₜ")
-plot_q_ext.setLabel("bottom","dₚ", "m")
+plot_q_ext.setLabel("bottom", "dₚ", "m")
 
 # Extinction factor
 sigma_ext = toolbox.extinction_factor(n_extinction, dp_log, q_ext)
@@ -203,10 +211,10 @@ sigma_ext = toolbox.extinction_factor(n_extinction, dp_log, q_ext)
 extinction = toolbox.extinction(sigma_ext, length)
 
 plot_ext = win.addPlot()
-plot_ext.plot(dp_log, extinction, pen=pg.mkPen((0,0,255), width=1.5))
+plot_ext.plot(dp_log, extinction, pen=pg.mkPen((0, 0, 255), width=1.5))
 plot_ext.setLogMode(x=True, y=False)
 plot_ext.setLabel("left", "ext")
-plot_ext.setLabel("bottom","dₚ", "m")
+plot_ext.setLabel("bottom", "dₚ", "m")
 
 
 # 10)
@@ -226,11 +234,11 @@ ext_20 = toolbox.extinction(sigma_ext_20, length)
 
 plot_ext_gr = win.addPlot()
 plot_ext_gr.addLegend()
-plot_ext_gr.plot(t_5, ext_5, pen=pg.mkPen((255,0,0), width=1.5), name="5*a")
-plot_ext_gr.plot(t_10, ext_10,pen=pg.mkPen((0,255,0), width=1.5), name="10*a")
-plot_ext_gr.plot(t_20, ext_20, pen=pg.mkPen((0,0,255), width=1.5), name="20*a")
+plot_ext_gr.plot(t_5, ext_5, pen=pg.mkPen((255, 0, 0), width=1.5), name="5*a")
+plot_ext_gr.plot(t_10, ext_10, pen=pg.mkPen((0, 255, 0), width=1.5), name="10*a")
+plot_ext_gr.plot(t_20, ext_20, pen=pg.mkPen((0, 0, 255), width=1.5), name="20*a")
 plot_ext_gr.setLabel("left", "ext")
-plot_ext_gr.setLabel("bottom","t", "s")
+plot_ext_gr.setLabel("bottom", "t", "s")
 
 # PyQtPlot main loop for graphs
 app.exec_()

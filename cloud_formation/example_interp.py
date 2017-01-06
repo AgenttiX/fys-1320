@@ -40,4 +40,5 @@ plt.show()
 
 # Try to find an analytical solution (you'll see that sympy will produce an error)
 # x_var = sympy.Symbol("x_var")
-# x_val = sympy.solvers.solve( (x_var**2) * sympy.log((sympy.sin(x_var)**2 + 1)*x_var + 1/x_var + sympy.log(x_var) + 1e-4*(x_var**5) ) - y_val, x_var )
+# x_val = sympy.solvers.solve( (x_var**2) *
+#         sympy.log((sympy.sin(x_var)**2 + 1)*x_var + 1/x_var + sympy.log(x_var) + 1e-4*(x_var**5) ) - y_val, x_var )

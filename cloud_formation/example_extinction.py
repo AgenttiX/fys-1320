@@ -11,16 +11,22 @@ import toolbox
 import numpy as np
 import matplotlib.pyplot as plt
 
-m = 1.33 + 0.001j
-lambda_var = 635
-dp = np.logspace(1,4,1000)
+m = 1.33 + 0.001j   # Refractive index for water
+lambda_var = 635    # Laser wavelength (nm)
+
+# Vector for particle sizes (Numpy array)
+dp = np.logspace(1, 4, 1000)
 
 Qext = np.zeros(dp.size)
 
+# Fill the Qext vector with data
 for k in range(dp.size):
+    # Compute the Mie parameters using the toolbox
     result = toolbox.mie(m, np.pi*dp[k] / lambda_var)
+    # The toolbox.mie returns a vector, in which the fourth item is the Qext. Other items aren't needed.
     Qext[k] = result[3]
 
+# Draw a figure with logarithmic axes
 plt.plot(dp, Qext)
 plt.xscale("log")
 plt.yscale("log")
