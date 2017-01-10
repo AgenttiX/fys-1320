@@ -16,7 +16,7 @@ M = 18.016e-3       # Molar mass of water (kg/mol)
 L = 2260e3          # Evaporation energy of water (J/kg)
 ka = 0.0257         # Thermal conductivity of air (W/(m*K))
 rho = 1000          # Air density (kg/m^3)
-gamma = 27.8e-3     # Surface tension of water (N/m)
+gamma = 72.8e-3     # Surface tension of water (N/m)
 Ntot = 1e10         # particle density (#/m^3)
 tmax = 2            # The maximum time up which to compute to (s)
 
