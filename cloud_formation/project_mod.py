@@ -114,7 +114,7 @@ def particle_diameter_withvalues(p_i):
                                                water_a, water_b, water_c, m_mol, surface_tension, rho_wat)
 
 # Draw a figure
-init_pressure_vec = np.arange(99050, 100500)
+init_pressure_vec = np.arange(99050, 109000)
 min_dp_vec = particle_diameter_withvalues(init_pressure_vec)
 
 plot_dp_by_pi = win.addPlot()
