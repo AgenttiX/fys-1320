@@ -6,7 +6,13 @@ We thereby presume that the MATLAB specific instructions of this particular proj
 making the project unnecessarily difficult for themselves.
 
 The provided example code was not Octave compatible and we found out that there is a MATLAB API for Python.
-Since both of us are familiar with Python and passionately hate MATLAB, we chose to utilise Python instead.
+Since MATLAB has several problems that limit its usability, we chose to utilise Python instead.
+The problems mentioned here include
+- The code cannot be used in environments where a valid license is not available
+- Adding functionality is difficult
+- Multiple functions and other software components cannot be properly packaged in a single text file
+    (this has somewhat been fixed in R2016b)
+- It's not object oriented
 
 Further information of the reasons behind our choice
 https://www.gnu.org/education/edu-why.html
@@ -32,10 +38,10 @@ import pyqtgraph as pg
 studnum_a = 3
 
 # Constants
-temp = 296.15               # 23 deg C, from instructions
+temp = 296.15               # (K), 23 deg C, from instructions
 diff = 0.282e-4             # Diffusion coefficient for water (m^2/s)
-gas_const = 8.3144621               # (Pa*m^3)/(mol*K), from example code
-surface_tension = 27.8e-3   # (N/m), From example code
+gas_const = 8.3144621       # (Pa*m^3)/(mol*K), from example code
+surface_tension = 72.8e-3   # (N/m), From example code                      FIXED
 m_mol = 18.016e-3           # Molar mass of water (kg/mol)
 rho_wat = 998.20            # Density of water (kg/m^3)
 evap_E = 2260e3             # Evaporation energy of water (J/kg)
@@ -60,19 +66,10 @@ water_a = 10.23
 water_b = 1750
 water_c = 38
 
-# Set background white and foreground black
-pg.setConfigOption('background', 'w')
-pg.setConfigOption('foreground', 'k')
-
-
 # Initialise figure environment
 app = pg.mkQApp()
+pg.setConfigOptions(antialias=True, background="w", foreground="k")
 win = pg.GraphicsWindow(title="Cloud formation")
-# win.setWindowTitle("Cloud formation")
-pg.setConfigOptions(antialias=True)
-
-# Make the background white
-# win.setBackground([255,255,255,255])
 
 
 # 5)
@@ -240,9 +237,13 @@ plot_ext_gr.plot(t_20, ext_20, pen=pg.mkPen((0, 0, 255), width=1.5), name="20*a"
 plot_ext_gr.setLabel("left", "ext")
 plot_ext_gr.setLabel("bottom", "t", "s")
 
+
 # PyQtPlot main loop for graphs
 app.exec_()
 
-# This prevents a segmentation fault
-# Don't ask us why
+# This helps prevent a segmentation fault
+# It might be related to the use of PyQtGraph and MATLAB in the same script, and this ensures
+# that they have enough time to exit properly
+# Googling "python exit code 139" gives this as the second result
+# https://stackoverflow.com/questions/33240350/process-finished-with-exit-code-139-error-trying-to-import-matlab-engine-in-py
 time.sleep(1)

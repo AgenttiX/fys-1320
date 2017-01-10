@@ -1,6 +1,9 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 
 """
+A significantly fixed and improved version of this program can be found with the name project_mod.py
+
+
 On the slide 7 of the first lecture it was mentioned that alternative programming environments can be used.
 We thereby presume that the MATLAB specific instructions of this particular project are simply to prevent students from
 making the project unnecessarily difficult for themselves.
@@ -13,8 +16,6 @@ https://www.gnu.org/education/edu-why.html
 
 Licensed with Creative Commons Attribution 4.0 International
 https://creativecommons.org/licenses/by/4.0/
-
-An improved version of this program can be found with the name project_mod.py
 """
 
 
