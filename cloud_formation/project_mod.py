@@ -1,6 +1,8 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 
 """
+This is the primary project file for our pre-report
+
 On the slide 7 of the first lecture it was mentioned that alternative programming environments can be used.
 We thereby presume that the MATLAB specific instructions of this particular project are simply to prevent students from
 making the project unnecessarily difficult for themselves.
@@ -12,7 +14,7 @@ The problems mentioned here include
 - Adding functionality is difficult
 - Multiple functions and other software components cannot be properly packaged in a single text file
     (this has somewhat been fixed in R2016b)
-- It's not object oriented
+- It's not properly object oriented
 
 Further information of the reasons behind our choice
 https://www.gnu.org/education/edu-why.html
@@ -24,8 +26,9 @@ This version is modified from project.py so, that the figures are suitable for u
 (black text on white background etc.)
 """
 
-
+# This code uses the cloud formation toolbox we've developed
 import toolbox
+
 import numpy as np
 import time
 
@@ -46,7 +49,6 @@ m_mol = 18.016e-3           # Molar mass of water (kg/mol)
 rho_wat = 998.20            # Density of water (kg/m^3)
 evap_E = 2260e3             # Evaporation energy of water (J/kg)
 thermal_con_air = 0.0257    # Thermal conductivity of air (W/(m*K))
-rho_air = 1000              # Air density (kg/m^3)
 heat_capacity_ratio = 1.4   # For (dry) air, from https://en.wikipedia.org/wiki/Heat_capacity_ratio
 
 
@@ -145,15 +147,15 @@ print(init_pressures_for_particles - final_pressure)
 # 8)
 # particle_sizes_for8 = np.array([5, 10, 20])*studnum_a*1e-9
 
-tmax = 4                    # The maximum time up which to compute to (s)
-particle_dens = 1e4         # particle density (#/cm^3)
+tmax = 4                        # The maximum time up which to compute to (s)
+particle_dens = 1e4*1e6        # particle density (#/m^3)
 
 # Compute particle growth
-t_5, dp_5, pw_5 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension,
+t_5, dp_5, pw_5 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_wat, surface_tension,
                                        particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[0])
-t_10, dp_10, pw_10 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension,
+t_10, dp_10, pw_10 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_wat, surface_tension,
                                           particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[1])
-t_20, dp_20, pw_20 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_air, surface_tension,
+t_20, dp_20, pw_20 = toolbox.solve_growth(temp, diff, m_mol, evap_E, thermal_con_air, rho_wat, surface_tension,
                                           particle_dens, tmax, 20*studnum_a*1e-9, part_pressures_on_particles[2])
 
 
