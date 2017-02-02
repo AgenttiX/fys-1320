@@ -51,3 +51,7 @@ init_pressures_for_particles = np.interp(particle_sizes, np.flipud(min_dp_vec),
 print("Initial pressures for our 12 particles (Pa)")
 print(np.round(init_pressures_for_particles))
 
+print("Initial pressure for 5nm")
+print(np.interp(5e-9, np.flipud(min_dp_vec),
+                                         np.flipud(init_pressure_vec), left=-1, right=-2))
+
