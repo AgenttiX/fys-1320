@@ -2,7 +2,7 @@
 
 # Toolbox_2 was created to move functions out from data_analysis.py
 
-
+import toolbox      # To avoid matlab from loading, comment this and uncomment line in simulate_extinction()
 from math import factorial
 import numpy as np
 
@@ -117,38 +117,40 @@ def find_drop_index(data):
     for i in range(index_of_greatest_diff-2000, index_of_greatest_diff+1000):
         if (data[i] < threshold):
             fine_tuned_index_of_drop = i
+            break
     if (fine_tuned_index_of_drop == -1):
         raise "Something went wrong in fine-tuning the index of pressure drop!"
     fine_tuned_index_of_drop -= 150     # -150 is approximation that sets index somewhat just before the drop starts
 
     return fine_tuned_index_of_drop
 
-def get_pressure_change(data):
+def get_pressure_change(measurement):
     """
     Returns initial and final pressures.
 
-    :param data: must be instance of class Measurement
+    :param measurement: must be instance of class Measurement
     :return: initial_pressure, final_pressure
     """
-    drop = find_drop_index(data.p_diff)
+    drop = find_drop_index(measurement.p_diff)
 
-    final_pressure = np.mean(data.p_abs[drop+6000,drop+16000])
-    drop_heigth = np.mean(data.p_diff[drop-6000 : drop-4000]) - np.mean(data.p_diff[drop+4000 : drop+6000])
+    final_pressure = np.mean(measurement.p_abs[drop + 6000: drop + 16000])
+    drop_heigth = np.mean(measurement.p_diff[drop - 6000 : drop - 4000]) - np.mean(measurement.p_diff[drop + 4000 : drop + 6000])
 
     initial_pressure = final_pressure + drop_heigth
 
-    return initial_pressure, final_pressure
+    return initial_pressure*1000, final_pressure*1000   # Note that pressures in arrays are in kPa
 
-def simulate_extinction(particle_size, p_i, p_f, particle_dens):
+def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10):
     """
-    Simulates particle growth extinction with given parameters. Growing particles are all the same size.
-    :param particle_size:
-    :param p_i: initial pressure
-    :param p_f: final pressure
-    :param n_extinction: the number of particles in unit volume  (#/m^3)
+    Simulates particle growth extinction with given parameters. Growing particles are all the same size
+    :param particle_size:   size of particle
+    :param p_i:             initial pressure
+    :param p_f:             final pressure
+    :param particle_dens:   the number of particles in unit volume  (#/m^3)
+    :param tmax:            the maximum time up which to compute to (s)
     :return:
     """
-    import toolbox
+    # import toolbox # Uncomment this and comment the line in beginning of file to avoid matalb from loading
 
     # Constants
     temp_i = 296.15  # (K), 23 deg C, from instructions
@@ -166,8 +168,6 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens):
     water_c = 38
     wavelength = 635  # Wavelength of our laser
     length = 1  # (m)
-    tmax = 4  # The maximum time up which to compute to (s)
-    #particle_dens = 1e4 * 1e6  # particle density (#/m^3)
 
     partial_pressure = (p_f/p_i) * toolbox.water_pvap(temp_i)   # Partial water pressure after adiabatic expansion
     temp_f = toolbox.final_temp(temp_i, p_f, p_i, heat_capacity_ratio)  # Temperature after adiabatic expansion
@@ -180,4 +180,4 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens):
 
     smallest_growing_particle =  toolbox.minimum_particle_diameter_2(p_i, p_f, temp_f, heat_capacity_ratio,
                                            water_a, water_b, water_c, m_mol, surface_tension, rho_wat)
-    return ext, smallest_growing_particle
+    return ext, t, smallest_growing_particle
