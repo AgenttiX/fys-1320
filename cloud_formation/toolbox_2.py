@@ -2,7 +2,7 @@
 
 # Toolbox_2 was created to move functions out from data_analysis.py
 
-import toolbox      # To avoid matlab from loading, comment this and uncomment line in simulate_extinction()
+import toolbox      # To avoid matlab from loading, comment this line and uncomment the line in simulate_extinction()
 from math import factorial
 import numpy as np
 
@@ -95,8 +95,8 @@ def find_drop_index(data):
     border_margin = np.int(index_spacing / index_skip) + 1 # for cropping off the ends of an array to avoid out_of_range
     greatest_difference = -1
     index_of_greatest_diff = -1
-    i_of_greatest = -1      # i is sparce index, meaning for every i, there's {index_skip=200} normal indexes
 
+    # i is sparce index, meaning for every i, there's {index_skip=200} normal indexes
     for i in range(border_margin, (np.int(data.size/index_skip)-border_margin)):
         index = i * index_skip
         # finds the difference of data around the index.
@@ -105,9 +105,7 @@ def find_drop_index(data):
             greatest_difference = difference
             index_of_greatest_diff = index
 
-
     # Fine tuning of index to the beginning of decline:
-
     # Minium and maxium of data before the drop occurs. Deviation is caused by random noice.
     minium_before_drop = np.amin(data[index_of_greatest_diff-4000 : index_of_greatest_diff-2000])
     maxium_before_drop = np.amax(data[index_of_greatest_diff-4000 : index_of_greatest_diff-2000])
@@ -150,7 +148,8 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10):
     :param tmax:            the maximum time up which to compute to (s)
     :return:
     """
-    # import toolbox # Uncomment this and comment the line in beginning of file to avoid matalb from loading
+    # To avoid matalb from loading, uncomment the next line and comment the line in beginning of file
+    # import toolbox
 
     # Constants
     temp_i = 296.15  # (K), 23 deg C, from instructions

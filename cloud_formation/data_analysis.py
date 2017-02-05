@@ -65,7 +65,7 @@ class Main:
         self.selected_data = 1
         self.noice_reduction_number = 0
         self.simulate_bool = False
-        self.particle_size_number = 10
+        self.particle_size_number = 50
         self.particle_density_number = 10
         self.first_update = True
 
@@ -142,7 +142,6 @@ class Main:
         self.linear_region.sigRegionChanged.connect(self.update_zoom_plot)
         self.plot_zoom.sigXRangeChanged.connect(self.update_zoom_region)
         self.plot_zoom.sigRangeChanged.connect(self.update_simulate_plot)
-        #self.plot_simulate.sigRangeChanged.connect(self.update_zoom_plot_from_simulate_plot)
 
         self.update_zoom_plot()
 
@@ -177,18 +176,7 @@ class Main:
             raise ValueError
 
         index_of_drop = toolbox_2.find_drop_index(measurement.p_diff)
-        time = measurement.time - measurement.time[index_of_drop]   # time vector which starts from the beginning of pressure drop
-
-        # Data simulation
-        if self.simulate_bool:
-            t_max = 4
-            p_i, p_f = toolbox_2.get_pressure_change(measurement)
-            size, time2, smallest_growing_particle = toolbox_2.simulate_extinction(self.particle_size_number*1e-9,
-                                                                        p_i, p_f, self.particle_density_number*1e10, t_max)
-            print("Smallest growing particle for this pressure change (",round(p_i/1000,1), "-",round(p_f/1000,1), "kPa) is",
-                                                                        round(smallest_growing_particle*1e9,1), "nm")
-            self.curve_simulate.setData(time2, size)
-            self.simulate_bool = False
+        time = measurement.time - measurement.time[index_of_drop]   # time vector starts from the beginning of pressure drop
 
         if self.first_update:
             self.curve_select = self.plot_select.plot(time, data)
@@ -199,9 +187,24 @@ class Main:
             self.curve_select.setData(time, data)
             self.curve_zoom.setData(time, data)
 
-        # sets the graphs for the drop-point
-        self.plot_select.setXRange(time[index_of_drop-3000], time[index_of_drop + 10000], padding=0)
-        self.plot_zoom.setXRange(time[index_of_drop], time[index_of_drop + 5000], padding=0)
+        # Data simulation
+        if self.simulate_bool:
+            t_max = 3
+            p_i, p_f = toolbox_2.get_pressure_change(measurement)
+            size, time2, smallest_growing_particle = toolbox_2.simulate_extinction(self.particle_size_number * 1e-9,
+                                                                                   p_i, p_f,
+                                                                                   self.particle_density_number * 1e10,
+                                                                                   t_max)
+            print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
+                  ", smallest growing particle for pressure change (", round(p_i / 1000, 2), "-",
+                  round(p_f / 1000, 2), "kPa) is ",
+                  round(smallest_growing_particle * 1e9, 2), " nm", sep="")
+            self.curve_simulate.setData(time2, size)
+            self.simulate_bool = False
+
+        # set the graphs to the point of pressure drop, units are in seconds
+        self.plot_select.setXRange(-2, 4, padding=0)
+        self.plot_zoom.setXRange(0, 0.5, padding=0)
 
         self.update_zoom_region()
         #self.update_zoom_plot()
@@ -209,16 +212,13 @@ class Main:
     def update_zoom_plot(self):
         self.plot_zoom.setXRange(*self.linear_region.getRegion(), padding=0)
 
-    def update_zoom_plot_from_simulate_plot(self):
-        self.plot_zoom.setXRange(self.plot_simulate.getViewBox().viewRange()[0][0], self.plot_simulate.getViewBox().viewRange()[0][1])
-        self.plot_zoom.setYRange(self.plot_simulate.getViewBox().viewRange()[1][0], self.plot_simulate.getViewBox().viewRange()[1][1])
-
     def update_zoom_region(self):
         self.linear_region.setRegion(self.plot_zoom.getViewBox().viewRange()[0])
 
     def update_simulate_plot(self):
-        self.plot_simulate.setXRange(self.plot_zoom.getViewBox().viewRange()[0][0], self.plot_zoom.getViewBox().viewRange()[0][1])
-        self.plot_simulate.setYRange(self.plot_zoom.getViewBox().viewRange()[1][0], self.plot_zoom.getViewBox().viewRange()[1][1])
+        a = self.plot_zoom.getViewBox().viewRange()
+        self.plot_simulate.setXRange(a[0][0], a[0][1])
+        self.plot_simulate.setYRange(a[1][0], a[1][1])
 
     def simulate_button_clicked(self):
         self.simulate_bool = True
