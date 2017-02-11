@@ -345,17 +345,17 @@ def minimum_particle_diameter_2(p_i, p_f, t_i, heat_capacity_ratio, a, b, c, m_m
     """
 
     t_f = final_temp(t_i, p_f, p_i, heat_capacity_ratio)
-    var_init_satur_press = saturation_pressure(t_i, a, b, c) * satur_frac
-    var_final_satur_press = saturation_pressure(t_f, a, b, c)
-
+    init_partial_press = saturation_pressure(t_i, a, b, c) * satur_frac
+    final_partial_press = (p_f/p_i) * init_partial_press
+    final_satur_press = saturation_pressure(t_f, a, b, c)
     """
     print("Final temperature:", t_f)
     print("Initial saturation pressure:", var_init_satur_press)
     print("Final saturation pressure:", var_final_satur_press)
     """
 
-    return (4 * m_mol * surface_tension) / (rho * gas_const * t_f * np.log((var_init_satur_press*p_f) /
-                                                                           (var_final_satur_press * p_i)))
+    return (4 * m_mol * surface_tension) / (rho * gas_const * t_f * np.log((final_partial_press) /
+                                                                           (final_satur_press)))
 
 
 def q_ext(dp, m, wavelength):

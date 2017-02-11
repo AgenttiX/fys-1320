@@ -148,7 +148,7 @@ class Main:
         self.plot_zoom.sigXRangeChanged.connect(self.update_zoom_region)
         self.plot_zoom.sigRangeChanged.connect(self.update_simulate_plot)
 
-        win.resize(1300,700)
+        win.resize(1100,600)
         self.update_zoom_plot()
 
         # PyQtGraph main loop
@@ -214,11 +214,18 @@ class Main:
                                                                                    p_i, p_f,
                                                                                    self.particle_density_number * 1e10,
                                                                                    t_max, self.saturation_percentage/100)
+            # short print:
+            # print("M:", self.meas_selected_number, ", ", round((p_i - p_f) / 1000, 3), "kPa", ", ", self.saturation_percentage, "%", ", ", round(smallest_growing_particle * 1e9, 2), "nm", ", ", sep="")
 
-            print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
-                  ", smallest growing particle for pressure change (", round(p_i / 1000, 2), "-",
-                  round(p_f / 1000, 2), "kPa) is ",
-                  round(smallest_growing_particle * 1e9, 2), " nm", sep="")
+            if (smallest_growing_particle > 0):
+                print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
+                      ", smallest growing particle for pressure change (", round(p_i / 1000, 2), "-",
+                      round(p_f / 1000, 2), " = ", round( (p_i - p_f) / 1000, 2), "kPa) in ", self.saturation_percentage,
+                      "% humidity is ", round(smallest_growing_particle * 1e9, 2), "nm", sep="")
+            else:
+                print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
+                      ", no particle will grow in ", "(", round(p_i / 1000, 2), "-", round(p_f / 1000, 2), " = ",
+                      round((p_i - p_f) / 1000, 2), "kPa)", " pressure change and ", self.saturation_percentage, "% humidity ", sep="")
 
             self.curve_simulate.setData(time2, size)
             self.simulate_bool = False
