@@ -264,6 +264,8 @@ def solve_growth(t, d, m, l, ka, rho, gamma, ntot, tmax, dp0, p0):
 
 def water_pvap(temp):
     """
+    Computes the saturated pressure at given temperature. Exactly the same as saturation_pressure(), but
+    only with pre-defined constants for water.
     Based on water_pvap.m by Joni Kalliokoski 2014-08-13
     :param temp: temperature (K)
     :return: vapor pressure of water (Pa)
@@ -289,6 +291,8 @@ def saturation_ratio(nu, gamma, r, t, d_p):
 
 def saturation_pressure(t, a, b, c):
     """
+    Computes the saturated pressure. Exactly the same as water_pvap(), but allows
+    calculation for other liquids as well.
     :param t: temperature (K)
     :param a: constant from table 17-1
     :param b: constant from table 17-1
@@ -323,10 +327,25 @@ def minimum_particle_diameter(m, gamma, rho, t_f, s_r):
     return (4 * m * gamma) / (rho * gas_const * t_f * np.log(s_r))
 
 
-def minimum_particle_diameter_2(p_i, p_f, t_i, heat_capacity_ratio, a, b, c, m_mol, surface_tension, rho):
+def minimum_particle_diameter_2(p_i, p_f, t_i, heat_capacity_ratio, a, b, c, m_mol, surface_tension, rho, satur_frac=1.0):
+    """
+    Calculates the minium growing particle size at adiabatic expansion.
+    :param p_i: initial pressure
+    :param p_f: final pressure
+    :param t_i: initial temperature
+    :param heat_capacity_ratio:
+    :param a: contant for water in AM_ch17 table 17-1
+    :param b: contant for water in AM_ch17 table 17-1
+    :param c: contant for water in AM_ch17 table 17-1
+    :param m_mol:  molar mass o (kg/mol)
+    :param surface_tension:
+    :param rho: density (kg/m^3)
+    :param satur_frac: saturation fraction at initial stage, by default gas in fully saturated
+    :return:
+    """
 
     t_f = final_temp(t_i, p_f, p_i, heat_capacity_ratio)
-    var_init_satur_press = saturation_pressure(t_i, a, b, c)
+    var_init_satur_press = saturation_pressure(t_i, a, b, c) * satur_frac
     var_final_satur_press = saturation_pressure(t_f, a, b, c)
 
     """

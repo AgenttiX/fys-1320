@@ -67,6 +67,7 @@ class Main:
         self.simulate_bool = False
         self.particle_size_number = 50
         self.particle_density_number = 10
+        self.saturation_percentage = 100
         self.first_update = True
 
         # Read data
@@ -117,9 +118,13 @@ class Main:
         self.__input_p_density.editingFinished.connect(self.update_change)
         layout.addWidget(self.__input_p_density, 6, 1)
 
+        self.__input_saturation_percentage = pg.SpinBox(value=self.saturation_percentage, int=True, minStep=1, step=1, min=0, max=100)
+        self.__input_saturation_percentage.editingFinished.connect(self.update_change)
+        layout.addWidget(self.__input_saturation_percentage, 7, 1)
+
         self.__simulateButton = QtGui.QPushButton("Simulate")
         self.__simulateButton.clicked.connect(self.simulate_button_clicked)
-        layout.addWidget(self.__simulateButton, 7, 1)
+        layout.addWidget(self.__simulateButton, 8, 1)
 
         widget2.show()
 
@@ -143,6 +148,7 @@ class Main:
         self.plot_zoom.sigXRangeChanged.connect(self.update_zoom_region)
         self.plot_zoom.sigRangeChanged.connect(self.update_simulate_plot)
 
+        win.resize(1300,700)
         self.update_zoom_plot()
 
         # PyQtGraph main loop
@@ -155,9 +161,22 @@ class Main:
         self.noice_reduction_number = self.__input_noice.value()
         self.particle_size_number = self.__input_p_size.value()
         self.particle_density_number = self.__input_p_density.value()
+        self.saturation_percentage = self.__input_saturation_percentage.value()
 
         # print("Selected series:", self.meas_selected_series)
         # print("Selected measurement:", self.meas_selected_number)
+
+        if not 1 <= self.meas_selected_number <= 17:
+            raise ValueError
+        if not 0 <= self.noice_reduction_number:
+            raise ValueError
+        if not 0 < self.particle_size_number:
+            raise ValueError
+        if not 0 <= self.particle_density_number:
+            raise ValueError
+        if not 0 <= self.saturation_percentage <= 100:
+            raise ValueError
+
         meas_index = self.meas_selected_number - 1
         if self.meas_selected_series == 1:
             measurement = self.meas_pressure[meas_index]
@@ -194,11 +213,13 @@ class Main:
             size, time2, smallest_growing_particle = toolbox_2.simulate_extinction(self.particle_size_number * 1e-9,
                                                                                    p_i, p_f,
                                                                                    self.particle_density_number * 1e10,
-                                                                                   t_max)
+                                                                                   t_max, self.saturation_percentage/100)
+
             print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
                   ", smallest growing particle for pressure change (", round(p_i / 1000, 2), "-",
                   round(p_f / 1000, 2), "kPa) is ",
                   round(smallest_growing_particle * 1e9, 2), " nm", sep="")
+
             self.curve_simulate.setData(time2, size)
             self.simulate_bool = False
 

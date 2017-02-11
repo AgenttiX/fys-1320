@@ -138,7 +138,7 @@ def get_pressure_change(measurement):
 
     return initial_pressure*1000, final_pressure*1000   # Note that pressures in arrays are in kPa
 
-def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10):
+def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10, saturation = 1.0):
     """
     Simulates particle growth extinction with given parameters. Growing particles are all the same size
     :param particle_size:   size of particle
@@ -146,6 +146,7 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10):
     :param p_f:             final pressure
     :param particle_dens:   the number of particles in unit volume  (#/m^3)
     :param tmax:            the maximum time up which to compute to (s)
+    :param saturation       propotional fraction of partial water pressure from its maxium value, a.k.a vapor quality
     :return:
     """
     # To avoid matalb from loading, uncomment the next line and comment the line in beginning of file
@@ -168,7 +169,7 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10):
     wavelength = 635  # Wavelength of our laser
     length = 1  # (m)
 
-    partial_pressure = (p_f/p_i) * toolbox.water_pvap(temp_i)   # Partial water pressure after adiabatic expansion
+    partial_pressure = (p_f/p_i) * toolbox.water_pvap(temp_i) * saturation   # Partial water pressure after adiabatic expansion
     temp_f = toolbox.final_temp(temp_i, p_f, p_i, heat_capacity_ratio)  # Temperature after adiabatic expansion
 
     t, dp, pw = toolbox.solve_growth(temp_f, diff, m_mol, evap_E, thermal_con_air, rho_wat, surface_tension,
@@ -178,5 +179,5 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10):
     ext = toolbox.extinction(sigma_ext, length)
 
     smallest_growing_particle =  toolbox.minimum_particle_diameter_2(p_i, p_f, temp_f, heat_capacity_ratio,
-                                           water_a, water_b, water_c, m_mol, surface_tension, rho_wat)
+                                           water_a, water_b, water_c, m_mol, surface_tension, rho_wat, saturation)
     return ext, t, smallest_growing_particle
