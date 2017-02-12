@@ -70,6 +70,11 @@ class Main:
         self.saturation_percentage = 100
         self.first_update = True
 
+        self.measurement = None
+        self.data = None
+        self.index_of_drop = None
+        self.hand_tuned_spots = []
+
         # Read data
         self.meas_pressure = self.read_to_list("data/by_pressure/", meas_first, meas_last_pressure)
         self.meas_mixture = self.read_to_list("data/by_mixture/", meas_first, meas_last_mixture)
@@ -139,6 +144,9 @@ class Main:
         self.linear_region.setZValue(-10)
         self.plot_select.addItem(self.linear_region)
 
+        self.line = pg.InfiniteLine(angle=90, movable=True)
+        self.plot_zoom.addItem(self.line)
+
         self.curve_select = None
         self.curve_zoom = None
         self.curve_simulate = None
@@ -147,6 +155,10 @@ class Main:
         self.linear_region.sigRegionChanged.connect(self.update_zoom_plot)
         self.plot_zoom.sigXRangeChanged.connect(self.update_zoom_region)
         self.plot_zoom.sigRangeChanged.connect(self.update_simulate_plot)
+
+        self.line.sigPositionChangeFinished.connect(self.line_moved)
+
+
 
         win.resize(1100,600)
         self.update_zoom_plot()
@@ -179,60 +191,41 @@ class Main:
 
         meas_index = self.meas_selected_number - 1
         if self.meas_selected_series == 1:
-            measurement = self.meas_pressure[meas_index]
+            self.measurement = self.meas_pressure[meas_index]
         elif self.meas_selected_series == 2:
-            measurement = self.meas_mixture[meas_index]
+            self.measurement = self.meas_mixture[meas_index]
         else:
             raise ValueError
 
         if self.selected_data == 1:
-            data = toolbox_2.remove_noice(measurement.p_diff, self.noice_reduction_number)
+            self.data = toolbox_2.remove_noice(self.measurement.p_diff, self.noice_reduction_number)
         elif self.selected_data == 2:
-            data = toolbox_2.remove_noice(measurement.p_abs, self.noice_reduction_number)
+            self.data = toolbox_2.remove_noice(self.measurement.p_abs, self.noice_reduction_number)
         elif self.selected_data == 3:
-            data = toolbox_2.remove_noice(toolbox_2.flip_and_normalize(measurement.ext), self.noice_reduction_number)
+            self.data = toolbox_2.remove_noice(toolbox_2.flip_and_normalize(self.measurement.ext), self.noice_reduction_number)
         else:
             raise ValueError
 
-        index_of_drop = toolbox_2.find_drop_index(measurement.p_diff)
-        time = measurement.time - measurement.time[index_of_drop]   # time vector starts from the beginning of pressure drop
+        self.index_of_drop = toolbox_2.find_drop_index(self.measurement.p_diff)
+        time = self.measurement.time - self.measurement.time[self.index_of_drop]   # time vector starts from the beginning of pressure drop
 
         if self.first_update:
-            self.curve_select = self.plot_select.plot(time, data)
-            self.curve_zoom = self.plot_zoom.plot(measurement.time, data)
+            self.curve_select = self.plot_select.plot(time, self.data)
+            self.curve_zoom = self.plot_zoom.plot(self.measurement.time, self.data)
             self.curve_simulate = self.plot_simulate.plot()
             self.first_update = False
         else:
-            self.curve_select.setData(time, data)
-            self.curve_zoom.setData(time, data)
+            self.curve_select.setData(time, self.data)
+            self.curve_zoom.setData(time, self.data)
 
-        # Data simulation
         if self.simulate_bool:
-            t_max = 3
-            p_i, p_f = toolbox_2.get_pressure_change(measurement)
-            size, time2, smallest_growing_particle = toolbox_2.simulate_extinction(self.particle_size_number * 1e-9,
-                                                                                   p_i, p_f,
-                                                                                   self.particle_density_number * 1e10,
-                                                                                   t_max, self.saturation_percentage/100)
-            # short print:
-            # print("M:", self.meas_selected_number, ", ", round((p_i - p_f) / 1000, 3), "kPa", ", ", self.saturation_percentage, "%", ", ", round(smallest_growing_particle * 1e9, 2), "nm", ", ", sep="")
-
-            if (smallest_growing_particle > 0):
-                print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
-                      ", smallest growing particle for pressure change (", round(p_i / 1000, 2), "-",
-                      round(p_f / 1000, 2), " = ", round( (p_i - p_f) / 1000, 2), "kPa) in ", self.saturation_percentage,
-                      "% humidity is ", round(smallest_growing_particle * 1e9, 2), "nm", sep="")
-            else:
-                print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
-                      ", no particle will grow in ", "(", round(p_i / 1000, 2), "-", round(p_f / 1000, 2), " = ",
-                      round((p_i - p_f) / 1000, 2), "kPa)", " pressure change and ", self.saturation_percentage, "% humidity ", sep="")
-
-            self.curve_simulate.setData(time2, size)
-            self.simulate_bool = False
+            self.simulation()
 
         # set the graphs to the point of pressure drop, units are in seconds
         self.plot_select.setXRange(-2, 4, padding=0)
         self.plot_zoom.setXRange(0, 0.5, padding=0)
+
+        self.line.setX(0.1)
 
         self.update_zoom_region()
         #self.update_zoom_plot()
@@ -252,11 +245,54 @@ class Main:
         self.simulate_bool = True
         self.update_change()
 
+    def line_moved(self):
+        # The line is supposed to move to the beginning of first wrinkle. the optimal spot is local maxium (not always visible)
+        if self.selected_data == 3:
+            ext_index = self.index_of_drop + int(self.line.value() * 10000)
+            ext_value = self.data[ext_index]
+
+            p_i, p_f = toolbox_2.get_pressure_change(self.measurement)
+            smallest_growing_particle = toolbox_2.minimum_particle_diameter(p_i, p_f, self.saturation_percentage / 100)
+
+            N = toolbox_2.particle_count_2(ext_value)
+            print("N =", N, "d =", smallest_growing_particle)
+
+            # under progress stuff
+            # under progress stuff
+            # under progress stuff
+
+
     def read_to_list(self, folder, start, stop):
         measurements = []
         for i in range(start, stop+1):
             measurements.append(Measurement(folder + str(i) + ".tdms"))
         return measurements
+
+    def simulation(self):
+        t_max = 3
+        p_i, p_f = toolbox_2.get_pressure_change(self.measurement)
+        size, time2 = toolbox_2.simulate_extinction(self.particle_size_number * 1e-9,
+                                                                               p_i, p_f,
+                                                                               self.particle_density_number * 1e10,
+                                                                               t_max, self.saturation_percentage / 100)
+        smallest_growing_particle = toolbox_2.minimum_particle_diameter(p_i, p_f, self.saturation_percentage / 100)
+        # short print:
+        # print("M:", self.meas_selected_number, ", ", round((p_i - p_f) / 1000, 3), "kPa", ", ", self.saturation_percentage, "%", ", ", round(smallest_growing_particle * 1e9, 2), "nm", ", ", sep="")
+
+        if (smallest_growing_particle > 0):
+            print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
+                  ", smallest growing particle for pressure change (", round(p_i / 1000, 2), "-",
+                  round(p_f / 1000, 2), " = ", round((p_i - p_f) / 1000, 2), "kPa) in ", self.saturation_percentage,
+                  "% humidity is ", round(smallest_growing_particle * 1e9, 2), "nm", sep="")
+        else:
+            print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
+                  ", no particle will grow in ", "(", round(p_i / 1000, 2), "-", round(p_f / 1000, 2), " = ",
+                  round((p_i - p_f) / 1000, 2), "kPa)", " pressure change and ", self.saturation_percentage,
+                  "% humidity ", sep="")
+
+        self.curve_simulate.setData(time2, size)
+        self.simulate_bool = False
+
 
 
 

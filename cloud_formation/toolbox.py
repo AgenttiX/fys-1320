@@ -327,7 +327,7 @@ def minimum_particle_diameter(m, gamma, rho, t_f, s_r):
     return (4 * m * gamma) / (rho * gas_const * t_f * np.log(s_r))
 
 
-def minimum_particle_diameter_2(p_i, p_f, t_i, heat_capacity_ratio, a, b, c, m_mol, surface_tension, rho, satur_frac=1.0):
+def minimum_particle_diameter_2(p_i, p_f, t_i, heat_capacity_ratio, a, b, c, m_mol, surface_tension, rho, saturation_fraction=1.0):
     """
     Calculates the minium growing particle size at adiabatic expansion.
     :param p_i: initial pressure
@@ -340,12 +340,12 @@ def minimum_particle_diameter_2(p_i, p_f, t_i, heat_capacity_ratio, a, b, c, m_m
     :param m_mol:  molar mass o (kg/mol)
     :param surface_tension:
     :param rho: density (kg/m^3)
-    :param satur_frac: saturation fraction at initial stage, by default gas in fully saturated
+    :param saturation_fraction: saturation fraction at initial stage, by default gas in fully saturated
     :return:
     """
 
     t_f = final_temp(t_i, p_f, p_i, heat_capacity_ratio)
-    init_partial_press = saturation_pressure(t_i, a, b, c) * satur_frac
+    init_partial_press = saturation_pressure(t_i, a, b, c) * saturation_fraction
     final_partial_press = (p_f/p_i) * init_partial_press
     final_satur_press = saturation_pressure(t_f, a, b, c)
     """

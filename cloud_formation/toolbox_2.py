@@ -155,17 +155,13 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10, satur
     # Constants
     temp_i = 296.15  # (K), 23 deg C, from instructions
     diff = 0.282e-4  # Diffusion coefficient for water (m^2/s)
-    gas_const = 8.3144621  # (Pa*m^3)/(mol*K), from example code
-    surface_tension = 72.8e-3  # (N/m), From example code                      FIXED
+    surface_tension = 72.8e-3  # (N/m), From example code
     m_mol = 18.016e-3  # Molar mass of water (kg/mol)
     rho_wat = 998.20  # Density of water (kg/m^3)
     evap_E = 2260e3  # Evaporation energy of water (J/kg)
     thermal_con_air = 0.0257  # Thermal conductivity of air (W/(m*K))
     heat_capacity_ratio = 1.4  # For (dry) air, from https://en.wikipedia.org/wiki/Heat_capacity_ratio
     m = 1.33 + 0.001  # Refractive index of water
-    water_a = 10.23
-    water_b = 1750
-    water_c = 38
     wavelength = 635  # Wavelength of our laser
     length = 1  # (m)
 
@@ -178,6 +174,68 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10, satur
     sigma_ext = toolbox.extinction_factor(particle_dens, dp, q_ext)
     ext = toolbox.extinction(sigma_ext, length)
 
-    smallest_growing_particle =  toolbox.minimum_particle_diameter_2(p_i, p_f, temp_f, heat_capacity_ratio,
-                                           water_a, water_b, water_c, m_mol, surface_tension, rho_wat, saturation)
-    return ext, t, smallest_growing_particle
+
+    return ext, t
+
+
+def minimum_particle_diameter(p_i, p_f, saturation = 1.0):
+    """
+    Returns the smallest growing particle size.
+    :param p_i:
+    :param p_f:
+    :param saturation:
+    :return:
+    """
+    temp_i = 296.15  # (K), 23 deg C, from instructions
+    heat_capacity_ratio = 1.4  # For (dry) air, from https://en.wikipedia.org/wiki/Heat_capacity_ratio
+    water_a = 10.23
+    water_b = 1750
+    water_c = 38
+    m_mol = 18.016e-3  # Molar mass of water (kg/mol)
+    surface_tension = 72.8e-3  # (N/m), From example code
+    rho_wat = 998.20  # Density of water (kg/m^3)
+
+    temp_f = toolbox.final_temp(temp_i, p_f, p_i, heat_capacity_ratio)  # Temperature after adiabatic expansion
+
+    smallest_growing_particle = toolbox.minimum_particle_diameter_2(p_i, p_f, temp_f, heat_capacity_ratio,
+                                                                    water_a, water_b, water_c, m_mol, surface_tension,
+                                                                    rho_wat, saturation)
+
+    return smallest_growing_particle
+
+
+def extinction_factor(extinction_fraction):
+    """
+    Calulates the extinction factor from equation:   extinction_fraction = exp( -extinction_factor * L)
+    Symbol: sigma_ext
+    :param extinction_fraction:     (1-I/I0), falls in range 0-1
+    :return:
+    """
+    L = 1           #length of tube (m)
+
+    return -np.log(1-extinction_fraction) / L
+
+
+def particle_count(sigma_ext, p_size, q_ext):
+    """
+    Returns the particle concentration in #/m^3
+    Symbol N
+    :param sigma_ext:   extinction factor (1/m)
+    :param p_size:      particle size (m)
+    :param q_ext:       extinction efficiency "Ekstinktiotehokkuus"
+    :return:
+    """
+    return (sigma_ext * 4) / (np.pi * p_size**2 * q_ext)
+
+
+def particle_count_2(extinction_fraction):
+    """
+    Returns particle count. Combines two functions for better code appereance.
+    :param extinction_fraction: (1-I/I0), falls in range 0-1
+    :return: N
+    """
+    p_size = 1.76e-6  # Particle size at the beginning of first wrinkle. Project_mod.py's 5th plot.
+    q_ext = 2.8  # extinction efficiency for above particle size. Project_mod.py's 4th plot.
+
+    sigma_ext = extinction_factor(extinction_fraction)
+    return particle_count(sigma_ext, p_size, q_ext)
