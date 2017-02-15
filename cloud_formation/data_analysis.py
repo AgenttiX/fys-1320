@@ -76,7 +76,9 @@ class Main:
 
         self.smallest_particles = np.load("smallest_particles.npy")
         self.number_counts = np.load("number_counts.npy")
-        self.particle_distribution_x = np.zeros(10)  # particle size
+        self.number_counts_2 = np.load("number_counts_2.npy")
+
+        self.particle_distribution_x = np.zeros(10)  # particle size (the plot in window)
         self.particle_distribution_y = np.zeros(10)  # number count for that size
 
 
@@ -143,9 +145,13 @@ class Main:
 
         self.plot_select = win.addPlot(title="Region selection")
         self.plot_zoom = win.addPlot(title="Zoom on selected region")
+        self.plot_simulate = win.addPlot(title="Simulation on particle growth")
         win.nextRow()
         self.plot_distribution = win.addPlot(title="Concentration distribtion")
-        self.plot_simulate = win.addPlot(title="Simulation on particle growth")
+        self.plot_rotatometer = win.addPlot(title="Rotatometer_fractions")
+
+        self.plot_distribution.addLegend()
+        self.plot_rotatometer.addLegend()
 
         self.linear_region = pg.LinearRegionItem([100000,110000])
         self.linear_region.setZValue(-10)
@@ -154,10 +160,15 @@ class Main:
         self.line = pg.InfiniteLine(angle=90, movable=True)
         self.plot_zoom.addItem(self.line)
 
+        self.set_labels()
+
         self.curve_select = None
         self.curve_zoom = None
-        self.curve_distribution = None
         self.curve_simulate = None
+        self.curve_distribution = None
+        self.curve_distribution_cumulative = None
+        self.curve_rotatometer = None
+        self.curve_rotatometer_fit = None
         self.update_change()
 
         self.linear_region.sigRegionChanged.connect(self.update_zoom_plot)
@@ -186,7 +197,7 @@ class Main:
         # print("Selected series:", self.meas_selected_series)
         # print("Selected measurement:", self.meas_selected_number)
 
-        if not 1 <= self.meas_selected_number <= 17:
+        if not 1 <= self.meas_selected_number <= 17: # In series 2 theres measurement 0, but that is copy of 8th
             raise ValueError
         if not 0 <= self.noice_reduction_number:
             raise ValueError
@@ -222,21 +233,33 @@ class Main:
         if self.first_update:
             self.curve_select = self.plot_select.plot(time, self.data)
             self.curve_zoom = self.plot_zoom.plot(self.measurement.time, self.data)
-            self.curve_distribution = self.plot_distribution.plot()
             self.curve_simulate = self.plot_simulate.plot()
+
+            self.curve_distribution = self.plot_distribution.plot(name="Concentration distribution",symbolBrush=(50,50,255), symbolPen='w')
+            self.curve_distribution_cumulative = self.plot_distribution.plot(pen=pg.mkPen((100, 200, 255)), name="Concentration",symbolBrush=(80, 160, 201), symbolPen='w')
+            self.curve_rotatometer = self.plot_rotatometer.plot(name="Concentration measured", symbolBrush=(50,50,255), symbolPen='w')
+            self.curve_rotatometer_fit = self.plot_rotatometer.plot(pen=pg.mkPen((100, 200, 255)),name="Concentration ideal")
+
             self.first_update = False
         else:
             self.curve_select.setData(time, self.data)
             self.curve_zoom.setData(time, self.data)
+
             self.curve_distribution.setData(self.particle_distribution_x, self.particle_distribution_y)
+            self.curve_distribution_cumulative.setData(self.smallest_particles, self.number_counts)
+            self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]),self.number_counts_2)
+            x = np.linspace(3.5,20,100)
+            self.curve_rotatometer_fit.setData(x,self.number_counts_2[0]*4*(1/x))
 
         if self.simulate_bool:
             self.simulation()
 
+
+        self.set_labels()
+
         # set the graphs to the point of pressure drop, units are in seconds
         self.plot_select.setXRange(-2, 4, padding=0)
         self.plot_zoom.setXRange(0, 0.3, padding=0)
-
         self.line.setX(0.1)
 
         self.update_zoom_region()
@@ -259,21 +282,34 @@ class Main:
 
     def line_moved(self):
         # The line is supposed to move by hand to the beginning of first wrinkle. The optimal spot is local maxium (not always visible)
-        if (self.selected_data == 3 and 7 <= self.meas_selected_number <= 17):
-            ext_index = self.index_of_drop + int(self.line.value() * 10000)
-            ext_value = self.data[ext_index]
+        ext_index = self.index_of_drop + int(self.line.value() * 10000)
+        ext_value = self.data[ext_index]
 
-            p_i, p_f = toolbox_2.get_pressure_change(self.measurement)
-            smallest_growing_particle = toolbox_2.minimum_particle_diameter(p_i, p_f, self.saturation_percentage / 100)
+        p_i, p_f = toolbox_2.get_pressure_change(self.measurement)
+        smallest_growing_particle = toolbox_2.minimum_particle_diameter(p_i, p_f, self.saturation_percentage / 100)
 
-            N = toolbox_2.particle_count_2(ext_value)
+        N = toolbox_2.particle_count_2(ext_value)
 
+        # measurement series 1
+        if (self.selected_data == 3 and 7 <= self.meas_selected_number <= 17 and self.meas_selected_series == 1):
             index = self.meas_selected_number - 7   # Assumes that first measurement is number 7
             self.smallest_particles[index] = smallest_growing_particle
             self.number_counts[index] = N
 
             self.update_distribution()
+            # Update plot
             self.curve_distribution.setData(self.particle_distribution_x, self.particle_distribution_y)
+            self.curve_distribution_cumulative.setData(self.smallest_particles, self.number_counts)
+
+        # measurement series 2
+        elif (self.selected_data == 3 and self.meas_selected_series == 2):
+            index = self.meas_selected_number -1       # begins from 1, 0th measurement is just copy of 8th
+            self.number_counts_2[index] = N
+
+            self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]), self.number_counts_2)
+            x = np.linspace(3.5, 20, 100)
+            self.curve_rotatometer_fit.setData(x, self.number_counts_2[0] * 4 * (1 / x))
+
 
 
 
@@ -285,10 +321,18 @@ class Main:
 
     def simulation(self):
         t_max = 3
+        if self.meas_selected_series==1:
+            particle_density_number = self.particle_density_number
+        else: # series 2:
+            factors = 4/np.array([4, 6, 8, 10, 12, 14, 16, 18])
+            factor = factors[(self.meas_selected_number-1)]
+            particle_density_number = self.particle_density_number * factor
+
+
         p_i, p_f = toolbox_2.get_pressure_change(self.measurement)
         size, time2 = toolbox_2.simulate_extinction(self.particle_size_number * 1e-9,
                                                                                p_i, p_f,
-                                                                               self.particle_density_number * 1e10,
+                                                                               particle_density_number * 1e10,
                                                                                t_max, self.saturation_percentage / 100)
         smallest_growing_particle = toolbox_2.minimum_particle_diameter(p_i, p_f, self.saturation_percentage / 100)
         # short print:
@@ -309,8 +353,6 @@ class Main:
         self.simulate_bool = False
 
     def update_distribution(self):
-        #TODO sort array by minimum_particle_diameter
-
         #  sort arrays by minimum particle diameter
         inds = self.smallest_particles.argsort()
         sorted_smallest_particles = self.smallest_particles[inds]
@@ -319,20 +361,45 @@ class Main:
 
             d_first = sorted_smallest_particles[i]
             d_second = sorted_smallest_particles[i+1]
-            DN = sorted_number_counts[i] - sorted_number_counts[i+1]
+            DN = sorted_number_counts[i+1] - sorted_number_counts[i]
             Dd = d_second - d_first
 
             # takes in account that the intervals are different size, so the value is arbitarily number count per >>> NANOMETER <<<
             self.particle_distribution_y[i] = (DN / (Dd * 1e9))
             self.particle_distribution_x[i] = (d_first + Dd / 2)
 
-            #if (i in [1,2,3,4,5,6]):
-            #    print(i, " DN", "%.2e"%DN, " Dd", "%.2e"%Dd, " d_first", "%.2e"%d_first, " N", "%.2e"%sorted_number_counts[i - 1])
+            #if (i in range(10)):
+            #    print(inds[i]+7, " DN", "%.2e"%DN, " Dd", "%.2e"%Dd, " d_first", "%.2e"%d_first, " N", "%.2e"%sorted_number_counts[i - 1])
 
 
     def save_numpy_array(self):
         np.save("smallest_particles.npy",self.smallest_particles)
         np.save("number_counts.npy", self.number_counts)
+        np.save("number_counts_2.npy", self.number_counts_2)
+
+    def set_labels(self):
+        if 1 <= self.selected_data <= 2:
+            self.plot_select.setLabel("left", "P", "Pa")
+            self.plot_select.setLabel("bottom", "t", "s")
+            self.plot_zoom.setLabel("left", "P", "Pa")
+            self.plot_zoom.setLabel("bottom", "t", "s")
+
+        if self.selected_data == 3:
+            self.plot_select.setLabel("left", "ext")
+            self.plot_select.setLabel("bottom", "t", "s")
+            self.plot_zoom.setLabel("left", "ext")
+            self.plot_zoom.setLabel("bottom", "t", "s")
+
+        self.plot_simulate.setLabel("left", "ext")
+        self.plot_simulate.setLabel("bottom", "t", "s")
+
+        self.plot_distribution.setLabel("left", "N")
+        self.plot_distribution.setLabel("bottom", "d_p", "m")
+        self.plot_distribution.showGrid(y=True)
+
+        self.plot_rotatometer.setLabel("left", "N")
+        self.plot_rotatometer.setLabel("bottom", "stream value 2 to dilution stream value x")
+        self.plot_rotatometer.showGrid(y=True)
 
 
 
