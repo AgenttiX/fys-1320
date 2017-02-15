@@ -1,12 +1,14 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 
-# Toolbox_2 was created to move functions out from data_analysis.py
+# This program serves as a collection of supplementary functions for data_analysis.py
 
-import toolbox      # To avoid matlab from loading, comment this line and uncomment the line in simulate_extinction()
+import toolbox  # To prevent Matlab from loading, comment this line and uncomment the line in simulate_extinction()
 from math import factorial
 import numpy as np
 
+
 # From http://scipy.github.io/old-wiki/pages/Cookbook/SavitzkyGolay
+# This function is thereby NOT covered by our licensing
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
     The Savitzky-Golay filter removes high frequency noise from data.
@@ -67,6 +69,7 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     y = np.concatenate((firstvals, y, lastvals))
     return np.convolve(m[::-1], y, mode='valid')
 
+
 def remove_noice(data, noice_reduction_number):
     if(noice_reduction_number == 0):
         return data
@@ -75,10 +78,12 @@ def remove_noice(data, noice_reduction_number):
     else:
         return savitzky_golay(data, (noice_reduction_number*50 + 1), 3) # window size 251, polynomial order 3
 
+
 def flip_and_normalize(data):
     index = find_drop_index(data)
     zero_level = np.mean(data[index-10000:index-6000])
     return 1-data/zero_level
+
 
 def find_drop_index(data):
     """
@@ -92,35 +97,36 @@ def find_drop_index(data):
     # Finding the biggest decline with coarse method, this is done by iterating differences on some interval.
     index_skip = 200        # every single index is not tested for performance reasons,
     index_spacing = 500     # the time interval between which difference is tested
-    border_margin = np.int(index_spacing / index_skip) + 1 # for cropping off the ends of an array to avoid out_of_range
+    border_margin = np.int(index_spacing / index_skip) + 1  # for cropping off the ends of an array to avoid out_of_range
     greatest_difference = -1
     index_of_greatest_diff = -1
 
-    # i is sparce index, meaning for every i, there's {index_skip=200} normal indexes
+    # i is sparse index, meaning for every i, there's {index_skip=200} normal indexes
     for i in range(border_margin, (np.int(data.size/index_skip)-border_margin)):
         index = i * index_skip
         # finds the difference of data around the index.
         difference = data[index - index_spacing] - data[index + index_spacing]
-        if (difference > greatest_difference):
+        if difference > greatest_difference:
             greatest_difference = difference
             index_of_greatest_diff = index
 
     # Fine tuning of index to the beginning of decline:
-    # Minium and maxium of data before the drop occurs. Deviation is caused by random noice.
-    minium_before_drop = np.amin(data[index_of_greatest_diff-4000 : index_of_greatest_diff-2000])
-    maxium_before_drop = np.amax(data[index_of_greatest_diff-4000 : index_of_greatest_diff-2000])
+    # Minimum and maximum of data before the drop occurs. Deviation is caused by random noise.
+    minium_before_drop = np.amin(data[index_of_greatest_diff-4000: index_of_greatest_diff-2000])
+    maxium_before_drop = np.amax(data[index_of_greatest_diff-4000: index_of_greatest_diff-2000])
     threshold = minium_before_drop - (maxium_before_drop-minium_before_drop)
 
     fine_tuned_index_of_drop = -1
     for i in range(index_of_greatest_diff-2000, index_of_greatest_diff+1000):
-        if (data[i] < threshold):
+        if data[i] < threshold:
             fine_tuned_index_of_drop = i
             break
-    if (fine_tuned_index_of_drop == -1):
-        raise "Something went wrong in fine-tuning the index of pressure drop!"
+    if fine_tuned_index_of_drop == -1:
+        raise UserWarning("Something went wrong in fine-tuning the index of pressure drop!")
     fine_tuned_index_of_drop -= 150     # -150 is approximation that sets index somewhat just before the drop starts
 
     return fine_tuned_index_of_drop
+
 
 def get_pressure_change(measurement):
     """
@@ -132,13 +138,14 @@ def get_pressure_change(measurement):
     drop = find_drop_index(measurement.p_diff)
 
     final_pressure = np.mean(measurement.p_abs[drop + 6000: drop + 16000])
-    drop_heigth = np.mean(measurement.p_diff[drop - 6000 : drop - 4000]) - np.mean(measurement.p_diff[drop + 4000 : drop + 6000])
+    drop_height = np.mean(measurement.p_diff[drop - 6000: drop - 4000]) - np.mean(measurement.p_diff[drop + 4000: drop + 6000])
 
-    initial_pressure = final_pressure + drop_heigth
+    initial_pressure = final_pressure + drop_height
 
     return initial_pressure*1000, final_pressure*1000   # Note that pressures in arrays are in kPa
 
-def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10, saturation = 1.0):
+
+def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax=10, saturation=1.0):
     """
     Simulates particle growth extinction with given parameters. Growing particles are all the same size
     :param particle_size:   size of particle
@@ -146,10 +153,11 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10, satur
     :param p_f:             final pressure
     :param particle_dens:   the number of particles in unit volume  (#/m^3)
     :param tmax:            the maximum time up which to compute to (s)
-    :param saturation       propotional fraction of partial water pressure from its maxium value, a.k.a vapor quality
+    :param saturation       proportional fraction of partial water pressure from its maximum value, a.k.a vapor quality
     :return:
     """
-    # To avoid matalb from loading, uncomment the next line and comment the line in beginning of file
+    # To avoid Matlab from loading until executing this function, uncomment
+    # the next line and comment the line in beginning of file
     # import toolbox
 
     # Constants
@@ -158,7 +166,7 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10, satur
     surface_tension = 72.8e-3  # (N/m), From example code
     m_mol = 18.016e-3  # Molar mass of water (kg/mol)
     rho_wat = 998.20  # Density of water (kg/m^3)
-    evap_E = 2260e3  # Evaporation energy of water (J/kg)
+    evap_e = 2260e3  # Evaporation energy of water (J/kg)
     thermal_con_air = 0.0257  # Thermal conductivity of air (W/(m*K))
     heat_capacity_ratio = 1.4  # For (dry) air, from https://en.wikipedia.org/wiki/Heat_capacity_ratio
     m = 1.33 + 0.001  # Refractive index of water
@@ -168,17 +176,16 @@ def simulate_extinction(particle_size, p_i, p_f, particle_dens, tmax = 10, satur
     partial_pressure = (p_f/p_i) * toolbox.water_pvap(temp_i) * saturation   # Partial water pressure after adiabatic expansion
     temp_f = toolbox.final_temp(temp_i, p_f, p_i, heat_capacity_ratio)  # Temperature after adiabatic expansion
 
-    t, dp, pw = toolbox.solve_growth(temp_f, diff, m_mol, evap_E, thermal_con_air, rho_wat, surface_tension,
-                                           particle_dens, tmax, particle_size, partial_pressure)
+    t, dp, pw = toolbox.solve_growth(temp_f, diff, m_mol, evap_e, thermal_con_air, rho_wat, surface_tension,
+                                     particle_dens, tmax, particle_size, partial_pressure)
     q_ext = toolbox.q_ext(dp, m, wavelength)
     sigma_ext = toolbox.extinction_factor(particle_dens, dp, q_ext)
     ext = toolbox.extinction(sigma_ext, length)
 
-
     return ext, t
 
 
-def minimum_particle_diameter(p_i, p_f, saturation = 1.0):
+def minimum_particle_diameter(p_i, p_f, saturation=1.0):
     """
     Returns the smallest growing particle size.
     :param p_i:
@@ -206,14 +213,14 @@ def minimum_particle_diameter(p_i, p_f, saturation = 1.0):
 
 def extinction_factor(extinction_fraction):
     """
-    Calulates the extinction factor from equation:   extinction_fraction = exp( -extinction_factor * L)
+    Calculates the extinction factor from equation:   extinction_fraction = exp( -extinction_factor * L)
     Symbol: sigma_ext
     :param extinction_fraction:     (1-I/I0), falls in range 0-1
     :return:
     """
-    L = 1           #length of tube (m)
+    l = 1           # length of tube (m)
 
-    return -np.log(1-extinction_fraction) / L
+    return -np.log(1-extinction_fraction) / l
 
 
 def particle_count(sigma_ext, p_size, q_ext):

@@ -17,21 +17,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+# toolbox_2 is a set of supplementary functions that have been developed together with this program
+import toolbox_2
 
 # npTDMS is a library for reading TDMS files created by LabVIEW
 # https://pypi.python.org/pypi/npTDMS/
-import toolbox_2
 import nptdms
+
 # PyQtGraph can be found from Ubuntu repositories as python3-pyqtgraph
 # http://www.pyqtgraph.org/
 import pyqtgraph as pg
-import numpy as np
-
 from pyqtgraph.Qt import QtGui
 
+import numpy as np
 
 
 class Measurement:
+    """ This class represents a single measurement and its data """
     def __init__(self, path):
         # Read the TDMS file
         tdms_file = nptdms.TdmsFile(path)
@@ -81,7 +83,6 @@ class Main:
         self.particle_distribution_x = np.zeros(10)  # particle size (the plot in window)
         self.particle_distribution_y = np.zeros(10)  # number count for that size
 
-
         # Read data
         self.meas_pressure = self.read_to_list("data/by_pressure/", meas_first, meas_last_pressure)
         self.meas_mixture = self.read_to_list("data/by_mixture/", meas_first, meas_last_mixture)
@@ -93,6 +94,7 @@ class Main:
         layout = QtGui.QGridLayout()
         widget2.setLayout(layout)
 
+        # Text labels for the control window
         labels = ["Measurement number", "Measurement series", "Data type (1:p_diff, 2:p_abs, 3:ext)",
                   "Noice reduction (0 = off)", "", "Particle size (nm) (useless)",
                   "Particle density (n*1e-10 1/m^3)"]
@@ -102,6 +104,7 @@ class Main:
             label.setText(text)
             layout.addWidget(label, i, 0)
 
+        # Inputs for the control window
         self.__input_meas = pg.SpinBox(value=self.meas_selected_number, int=True, minStep=1, step=1)
         self.__input_meas.editingFinished.connect(self.update_change)
         layout.addWidget(self.__input_meas, 0, 1)
@@ -153,7 +156,7 @@ class Main:
         self.plot_distribution.addLegend()
         self.plot_rotatometer.addLegend()
 
-        self.linear_region = pg.LinearRegionItem([100000,110000])
+        self.linear_region = pg.LinearRegionItem([100000, 110000])
         self.linear_region.setZValue(-10)
         self.plot_select.addItem(self.linear_region)
 
@@ -177,9 +180,7 @@ class Main:
 
         self.line.sigPositionChangeFinished.connect(self.line_moved)
 
-
-
-        #win.resize(1100,600)
+        # win.resize(1100,600)
         self.update_zoom_plot()
 
         # PyQtGraph main loop
@@ -197,7 +198,7 @@ class Main:
         # print("Selected series:", self.meas_selected_series)
         # print("Selected measurement:", self.meas_selected_number)
 
-        if not 1 <= self.meas_selected_number <= 17: # In series 2 theres measurement 0, but that is copy of 8th
+        if not 1 <= self.meas_selected_number <= 17:  # In series 2 there's measurement 0, but that's a copy of the 8th
             raise ValueError
         if not 0 <= self.noice_reduction_number:
             raise ValueError
@@ -235,10 +236,10 @@ class Main:
             self.curve_zoom = self.plot_zoom.plot(self.measurement.time, self.data)
             self.curve_simulate = self.plot_simulate.plot()
 
-            self.curve_distribution = self.plot_distribution.plot(name="Concentration distribution",symbolBrush=(50,50,255), symbolPen='w')
-            self.curve_distribution_cumulative = self.plot_distribution.plot(pen=pg.mkPen((100, 200, 255)), name="Concentration",symbolBrush=(80, 160, 201), symbolPen='w')
-            self.curve_rotatometer = self.plot_rotatometer.plot(name="Concentration measured", symbolBrush=(50,50,255), symbolPen='w')
-            self.curve_rotatometer_fit = self.plot_rotatometer.plot(pen=pg.mkPen((100, 200, 255)),name="Concentration ideal")
+            self.curve_distribution = self.plot_distribution.plot(name="Concentration distribution", symbolBrush=(50, 50, 255), symbolPen='w')
+            self.curve_distribution_cumulative = self.plot_distribution.plot(pen=pg.mkPen((100, 200, 255)), name="Concentration", symbolBrush=(80, 160, 201), symbolPen='w')
+            self.curve_rotatometer = self.plot_rotatometer.plot(name="Concentration measured", symbolBrush=(50, 50, 255), symbolPen='w')
+            self.curve_rotatometer_fit = self.plot_rotatometer.plot(pen=pg.mkPen((100, 200, 255)), name="Concentration ideal")
 
             self.first_update = False
         else:
@@ -247,13 +248,12 @@ class Main:
 
             self.curve_distribution.setData(self.particle_distribution_x, self.particle_distribution_y)
             self.curve_distribution_cumulative.setData(self.smallest_particles, self.number_counts)
-            self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]),self.number_counts_2)
-            x = np.linspace(3.5,20,100)
-            self.curve_rotatometer_fit.setData(x,self.number_counts_2[0]*4*(1/x))
+            self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]), self.number_counts_2)
+            x = np.linspace(3.5, 20, 100)
+            self.curve_rotatometer_fit.setData(x, self.number_counts_2[0]*4*(1/x))
 
         if self.simulate_bool:
             self.simulation()
-
 
         self.set_labels()
 
@@ -263,7 +263,7 @@ class Main:
         self.line.setX(0.1)
 
         self.update_zoom_region()
-        #self.update_zoom_plot()
+        # self.update_zoom_plot()
 
     def update_zoom_plot(self):
         self.plot_zoom.setXRange(*self.linear_region.getRegion(), padding=0)
@@ -281,7 +281,8 @@ class Main:
         self.update_change()
 
     def line_moved(self):
-        # The line is supposed to move by hand to the beginning of first wrinkle. The optimal spot is local maxium (not always visible)
+        # The line is supposed to be moved by hand to the beginning of first wrinkle.
+        # The optimal spot is local maximum (not always visible)
         ext_index = self.index_of_drop + int(self.line.value() * 10000)
         ext_value = self.data[ext_index]
 
@@ -291,7 +292,7 @@ class Main:
         N = toolbox_2.particle_count_2(ext_value)
 
         # measurement series 1
-        if (self.selected_data == 3 and 7 <= self.meas_selected_number <= 17 and self.meas_selected_series == 1):
+        if self.selected_data == 3 and 7 <= self.meas_selected_number <= 17 and self.meas_selected_series == 1:
             index = self.meas_selected_number - 7   # Assumes that first measurement is number 7
             self.smallest_particles[index] = smallest_growing_particle
             self.number_counts[index] = N
@@ -302,18 +303,16 @@ class Main:
             self.curve_distribution_cumulative.setData(self.smallest_particles, self.number_counts)
 
         # measurement series 2
-        elif (self.selected_data == 3 and self.meas_selected_series == 2):
-            index = self.meas_selected_number -1       # begins from 1, 0th measurement is just copy of 8th
+        elif self.selected_data == 3 and self.meas_selected_series == 2:
+            index = self.meas_selected_number - 1       # begins from 1, 0th measurement is just copy of 8th
             self.number_counts_2[index] = N
 
             self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]), self.number_counts_2)
             x = np.linspace(3.5, 20, 100)
             self.curve_rotatometer_fit.setData(x, self.number_counts_2[0] * 4 * (1 / x))
 
-
-
-
-    def read_to_list(self, folder, start, stop):
+    @staticmethod
+    def read_to_list(folder, start, stop):
         measurements = []
         for i in range(start, stop+1):
             measurements.append(Measurement(folder + str(i) + ".tdms"))
@@ -321,24 +320,23 @@ class Main:
 
     def simulation(self):
         t_max = 3
-        if self.meas_selected_series==1:
+        if self.meas_selected_series == 1:
             particle_density_number = self.particle_density_number
         else: # series 2:
             factors = 4/np.array([4, 6, 8, 10, 12, 14, 16, 18])
             factor = factors[(self.meas_selected_number-1)]
             particle_density_number = self.particle_density_number * factor
 
-
         p_i, p_f = toolbox_2.get_pressure_change(self.measurement)
         size, time2 = toolbox_2.simulate_extinction(self.particle_size_number * 1e-9,
-                                                                               p_i, p_f,
-                                                                               particle_density_number * 1e10,
-                                                                               t_max, self.saturation_percentage / 100)
+                                                    p_i, p_f,
+                                                    particle_density_number * 1e10,
+                                                    t_max, self.saturation_percentage / 100)
         smallest_growing_particle = toolbox_2.minimum_particle_diameter(p_i, p_f, self.saturation_percentage / 100)
         # short print:
         # print("M:", self.meas_selected_number, ", ", round((p_i - p_f) / 1000, 3), "kPa", ", ", self.saturation_percentage, "%", ", ", round(smallest_growing_particle * 1e9, 2), "nm", ", ", sep="")
 
-        if (smallest_growing_particle > 0):
+        if smallest_growing_particle > 0:
             print("M:", self.meas_selected_number, " S:", self.meas_selected_series, " D:", self.selected_data,
                   ", smallest growing particle for pressure change (", round(p_i / 1000, 2), "-",
                   round(p_f / 1000, 2), " = ", round((p_i - p_f) / 1000, 2), "kPa) in ", self.saturation_percentage,
@@ -361,19 +359,18 @@ class Main:
 
             d_first = sorted_smallest_particles[i]
             d_second = sorted_smallest_particles[i+1]
-            DN = sorted_number_counts[i+1] - sorted_number_counts[i]
-            Dd = d_second - d_first
+            dn = sorted_number_counts[i+1] - sorted_number_counts[i]
+            dd = d_second - d_first
 
             # takes in account that the intervals are different size, so the value is arbitarily number count per >>> NANOMETER <<<
-            self.particle_distribution_y[i] = (DN / (Dd * 1e9))
-            self.particle_distribution_x[i] = (d_first + Dd / 2)
+            self.particle_distribution_y[i] = (dn / (dd * 1e9))
+            self.particle_distribution_x[i] = (d_first + dd / 2)
 
-            #if (i in range(10)):
-            #    print(inds[i]+7, " DN", "%.2e"%DN, " Dd", "%.2e"%Dd, " d_first", "%.2e"%d_first, " N", "%.2e"%sorted_number_counts[i - 1])
-
+            # if (i in range(10)):
+            #    print(inds[i]+7, " dn", "%.2e"%dn, " dd", "%.2e"%dd, " d_first", "%.2e"%d_first, " N", "%.2e"%sorted_number_counts[i - 1])
 
     def save_numpy_array(self):
-        np.save("smallest_particles.npy",self.smallest_particles)
+        np.save("smallest_particles.npy", self.smallest_particles)
         np.save("number_counts.npy", self.number_counts)
         np.save("number_counts_2.npy", self.number_counts_2)
 
@@ -400,11 +397,6 @@ class Main:
         self.plot_rotatometer.setLabel("left", "N")
         self.plot_rotatometer.setLabel("bottom", "stream value 2 to dilution stream value x")
         self.plot_rotatometer.showGrid(y=True)
-
-
-
-
-
 
 
 def main():

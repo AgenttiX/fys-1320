@@ -127,7 +127,8 @@ class Main:
         # Main loop
         qapp.exec_()
 
-    def show_contents(self, path):
+    @staticmethod
+    def show_contents(path):
         """
         Prints the contents of a TDMS file (channel display seems not to work)
         :param path: path to file (str)
