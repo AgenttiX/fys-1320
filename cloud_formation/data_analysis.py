@@ -73,7 +73,12 @@ class Main:
         self.measurement = None
         self.data = None
         self.index_of_drop = None
-        self.hand_tuned_spots = []
+
+        self.smallest_particles = np.load("smallest_particles.npy")
+        self.number_counts = np.load("number_counts.npy")
+        self.particle_distribution_x = np.zeros(10)  # particle size
+        self.particle_distribution_y = np.zeros(10)  # number count for that size
+
 
         # Read data
         self.meas_pressure = self.read_to_list("data/by_pressure/", meas_first, meas_last_pressure)
@@ -138,6 +143,8 @@ class Main:
 
         self.plot_select = win.addPlot(title="Region selection")
         self.plot_zoom = win.addPlot(title="Zoom on selected region")
+        win.nextRow()
+        self.plot_distribution = win.addPlot(title="Concentration distribtion")
         self.plot_simulate = win.addPlot(title="Simulation on particle growth")
 
         self.linear_region = pg.LinearRegionItem([100000,110000])
@@ -149,6 +156,7 @@ class Main:
 
         self.curve_select = None
         self.curve_zoom = None
+        self.curve_distribution = None
         self.curve_simulate = None
         self.update_change()
 
@@ -160,7 +168,7 @@ class Main:
 
 
 
-        win.resize(1100,600)
+        #win.resize(1100,600)
         self.update_zoom_plot()
 
         # PyQtGraph main loop
@@ -209,21 +217,25 @@ class Main:
         self.index_of_drop = toolbox_2.find_drop_index(self.measurement.p_diff)
         time = self.measurement.time - self.measurement.time[self.index_of_drop]   # time vector starts from the beginning of pressure drop
 
+        self.update_distribution()
+
         if self.first_update:
             self.curve_select = self.plot_select.plot(time, self.data)
             self.curve_zoom = self.plot_zoom.plot(self.measurement.time, self.data)
+            self.curve_distribution = self.plot_distribution.plot()
             self.curve_simulate = self.plot_simulate.plot()
             self.first_update = False
         else:
             self.curve_select.setData(time, self.data)
             self.curve_zoom.setData(time, self.data)
+            self.curve_distribution.setData(self.particle_distribution_x, self.particle_distribution_y)
 
         if self.simulate_bool:
             self.simulation()
 
         # set the graphs to the point of pressure drop, units are in seconds
         self.plot_select.setXRange(-2, 4, padding=0)
-        self.plot_zoom.setXRange(0, 0.5, padding=0)
+        self.plot_zoom.setXRange(0, 0.3, padding=0)
 
         self.line.setX(0.1)
 
@@ -246,8 +258,8 @@ class Main:
         self.update_change()
 
     def line_moved(self):
-        # The line is supposed to move to the beginning of first wrinkle. the optimal spot is local maxium (not always visible)
-        if self.selected_data == 3:
+        # The line is supposed to move by hand to the beginning of first wrinkle. The optimal spot is local maxium (not always visible)
+        if (self.selected_data == 3 and 7 <= self.meas_selected_number <= 17):
             ext_index = self.index_of_drop + int(self.line.value() * 10000)
             ext_value = self.data[ext_index]
 
@@ -255,11 +267,14 @@ class Main:
             smallest_growing_particle = toolbox_2.minimum_particle_diameter(p_i, p_f, self.saturation_percentage / 100)
 
             N = toolbox_2.particle_count_2(ext_value)
-            print("N =", N, "d =", smallest_growing_particle)
 
-            # under progress stuff
-            # under progress stuff
-            # under progress stuff
+            index = self.meas_selected_number - 7   # Assumes that first measurement is number 7
+            self.smallest_particles[index] = smallest_growing_particle
+            self.number_counts[index] = N
+
+            self.update_distribution()
+            self.curve_distribution.setData(self.particle_distribution_x, self.particle_distribution_y)
+
 
 
     def read_to_list(self, folder, start, stop):
@@ -292,6 +307,32 @@ class Main:
 
         self.curve_simulate.setData(time2, size)
         self.simulate_bool = False
+
+    def update_distribution(self):
+        #TODO sort array by minimum_particle_diameter
+
+        #  sort arrays by minimum particle diameter
+        inds = self.smallest_particles.argsort()
+        sorted_smallest_particles = self.smallest_particles[inds]
+        sorted_number_counts = self.number_counts[inds]
+        for i in range(10):  # 11 measurements, iterates 10 in between gaps
+
+            d_first = sorted_smallest_particles[i]
+            d_second = sorted_smallest_particles[i+1]
+            DN = sorted_number_counts[i] - sorted_number_counts[i+1]
+            Dd = d_second - d_first
+
+            # takes in account that the intervals are different size, so the value is arbitarily number count per >>> NANOMETER <<<
+            self.particle_distribution_y[i] = (DN / (Dd * 1e9))
+            self.particle_distribution_x[i] = (d_first + Dd / 2)
+
+            #if (i in [1,2,3,4,5,6]):
+            #    print(i, " DN", "%.2e"%DN, " Dd", "%.2e"%Dd, " d_first", "%.2e"%d_first, " N", "%.2e"%sorted_number_counts[i - 1])
+
+
+    def save_numpy_array(self):
+        np.save("smallest_particles.npy",self.smallest_particles)
+        np.save("number_counts.npy", self.number_counts)
 
 
 
