@@ -1,5 +1,6 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 
+## @package data_analysis
 # This program is for analysing data created by logger_software v2 of the cloud formation experiment
 # of the Tampere University of Technology student laboratory of physics
 
@@ -187,6 +188,10 @@ class Main:
         qapp.exec_()
 
     def update_change(self):
+        """
+        Updates the whole view based on the values of the configuration window.
+        :return: -
+        """
         self.meas_selected_number = self.__input_meas.value()
         self.meas_selected_series = self.__input_series.value()
         self.selected_data = self.__input_select.value()
@@ -218,11 +223,11 @@ class Main:
             raise ValueError
 
         if self.selected_data == 1:
-            self.data = toolbox_2.remove_noice(self.measurement.p_diff, self.noice_reduction_number)
+            self.data = toolbox_2.remove_noise(self.measurement.p_diff, self.noice_reduction_number)
         elif self.selected_data == 2:
-            self.data = toolbox_2.remove_noice(self.measurement.p_abs, self.noice_reduction_number)
+            self.data = toolbox_2.remove_noise(self.measurement.p_abs, self.noice_reduction_number)
         elif self.selected_data == 3:
-            self.data = toolbox_2.remove_noice(toolbox_2.flip_and_normalize(self.measurement.ext), self.noice_reduction_number)
+            self.data = toolbox_2.remove_noise(toolbox_2.flip_and_normalize(self.measurement.ext), self.noice_reduction_number)
         else:
             raise ValueError
 
@@ -266,21 +271,43 @@ class Main:
         # self.update_zoom_plot()
 
     def update_zoom_plot(self):
+        """
+        Updates the zoomed plot to match the region set in the primary graph
+        :return: -
+        """
         self.plot_zoom.setXRange(*self.linear_region.getRegion(), padding=0)
 
     def update_zoom_region(self):
+        """
+        Updates the zoom region in the primary graph to match the area of the zoomed graph
+        :return: -
+        """
         self.linear_region.setRegion(self.plot_zoom.getViewBox().viewRange()[0])
 
     def update_simulate_plot(self):
+        """
+        Updates the simulation plot view to match that of the zoomed signal
+        :return:
+        """
         a = self.plot_zoom.getViewBox().viewRange()
         self.plot_simulate.setXRange(a[0][0], a[0][1])
         self.plot_simulate.setYRange(a[1][0], a[1][1])
 
     def simulate_button_clicked(self):
+        """
+        Enable simulating and update the graphs.
+        This function is called by the simulation button.
+        :return: -
+        """
         self.simulate_bool = True
         self.update_change()
 
     def line_moved(self):
+        """
+        This function is called when the line is moved in the zoomed graph.
+        :return: -
+        """
+
         # The line is supposed to be moved by hand to the beginning of first wrinkle.
         # The optimal spot is local maximum (not always visible)
         ext_index = self.index_of_drop + int(self.line.value() * 10000)
@@ -289,13 +316,13 @@ class Main:
         p_i, p_f = toolbox_2.get_pressure_change(self.measurement)
         smallest_growing_particle = toolbox_2.minimum_particle_diameter(p_i, p_f, self.saturation_percentage / 100)
 
-        N = toolbox_2.particle_count_2(ext_value)
+        n = toolbox_2.particle_count_2(ext_value)
 
         # measurement series 1
         if self.selected_data == 3 and 7 <= self.meas_selected_number <= 17 and self.meas_selected_series == 1:
             index = self.meas_selected_number - 7   # Assumes that first measurement is number 7
             self.smallest_particles[index] = smallest_growing_particle
-            self.number_counts[index] = N
+            self.number_counts[index] = n
 
             self.update_distribution()
             # Update plot
@@ -305,7 +332,7 @@ class Main:
         # measurement series 2
         elif self.selected_data == 3 and self.meas_selected_series == 2:
             index = self.meas_selected_number - 1       # begins from 1, 0th measurement is just copy of 8th
-            self.number_counts_2[index] = N
+            self.number_counts_2[index] = n
 
             self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]), self.number_counts_2)
             x = np.linspace(3.5, 20, 100)
@@ -313,12 +340,27 @@ class Main:
 
     @staticmethod
     def read_to_list(folder, start, stop):
+        """
+        Read the measurements of a folder to Measurement objects in a list.
+        :param folder: string of the folder to be scanned
+        :param start: start index of the files
+        :param stop: stop index of the files
+        :return: list of Measurement objects
+        """
         measurements = []
         for i in range(start, stop+1):
             measurements.append(Measurement(folder + str(i) + ".tdms"))
         return measurements
 
     def simulation(self):
+        """
+        Computes and displays the simulation of extinction as a function of time.
+        The simulation is done using mathematical tools provided by toolbox_2.py.
+        The toolbox_2.py utilises toolbox.py which in turn uses Matlab to run
+        code provided by Tampere University of Technology.
+        :return: -
+        """
+
         t_max = 3
         if self.meas_selected_series == 1:
             particle_density_number = self.particle_density_number
@@ -370,11 +412,20 @@ class Main:
             #    print(inds[i]+7, " dn", "%.2e"%dn, " dd", "%.2e"%dd, " d_first", "%.2e"%d_first, " N", "%.2e"%sorted_number_counts[i - 1])
 
     def save_numpy_array(self):
+        """
+        Saves the changes made to the result arrays.
+        :return: -
+        """
         np.save("smallest_particles.npy", self.smallest_particles)
         np.save("number_counts.npy", self.number_counts)
         np.save("number_counts_2.npy", self.number_counts_2)
 
     def set_labels(self):
+        """
+        Sets the graph labels to match the current data.
+        :return: -
+        """
+
         if 1 <= self.selected_data <= 2:
             self.plot_select.setLabel("left", "P", "Pa")
             self.plot_select.setLabel("bottom", "t", "s")
@@ -382,9 +433,9 @@ class Main:
             self.plot_zoom.setLabel("bottom", "t", "s")
 
         if self.selected_data == 3:
-            self.plot_select.setLabel("left", "ext")
+            self.plot_select.setLabel("left", "ext", "")
             self.plot_select.setLabel("bottom", "t", "s")
-            self.plot_zoom.setLabel("left", "ext")
+            self.plot_zoom.setLabel("left", "ext", "")
             self.plot_zoom.setLabel("bottom", "t", "s")
 
         self.plot_simulate.setLabel("left", "ext")

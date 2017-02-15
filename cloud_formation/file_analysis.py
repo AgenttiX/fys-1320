@@ -1,5 +1,6 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 
+## @package file_analysis
 # This program is for reverse engineering the TDMS -> TXT conversion process done by
 # the convert_TDMS_to_ASCII.exe of Tampere University of Technology student laboratory of physics
 
@@ -27,6 +28,7 @@ import pyqtgraph as pg
 
 
 class TDMS_Measurement:
+    """ This class represents a single measurement loaded from a TDMS file """
     def __init__(self, path):
         # Read the TDMS file
         tdms_file = nptdms.TdmsFile(path)
@@ -43,6 +45,7 @@ class TDMS_Measurement:
 
 
 class TXT_Measurement:
+    """ This class represents a single measurement loaded from a TXT file """
     def __init__(self, path):
         data = np.loadtxt(path)
         self.p_diff = data[0]

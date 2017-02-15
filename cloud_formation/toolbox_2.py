@@ -1,5 +1,6 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 
+## @package toolbox_2
 # This program serves as a collection of supplementary functions for data_analysis.py
 
 import toolbox  # To prevent Matlab from loading, comment this line and uncomment the line in simulate_extinction()
@@ -7,7 +8,7 @@ from math import factorial
 import numpy as np
 
 
-# From http://scipy.github.io/old-wiki/pages/Cookbook/SavitzkyGolay
+## From http://scipy.github.io/old-wiki/pages/Cookbook/SavitzkyGolay
 # This function is thereby NOT covered by our licensing
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
@@ -70,13 +71,19 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     return np.convolve(m[::-1], y, mode='valid')
 
 
-def remove_noice(data, noice_reduction_number):
-    if(noice_reduction_number == 0):
+def remove_noise(data, noise_reduction_number):
+    """
+    Uses the Savitzky-Golay filter function to remove noise from the given data
+    :param data: numpy array to be filtered
+    :param noise_reduction_number: filter level
+    :return: filtered data
+    """
+    if noise_reduction_number == 0:
         return data
-    if(noice_reduction_number < 0):
-        raise ValueError("Noice reduction can't be negative")
+    if noise_reduction_number < 0:
+        raise ValueError("Noise reduction can't be negative")
     else:
-        return savitzky_golay(data, (noice_reduction_number*50 + 1), 3) # window size 251, polynomial order 3
+        return savitzky_golay(data, (noise_reduction_number * 50 + 1), 3) # window size 251, polynomial order 3
 
 
 def flip_and_normalize(data):
