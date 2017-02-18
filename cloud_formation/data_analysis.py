@@ -341,7 +341,7 @@ class Main:
             x = np.linspace(3.5, 20, 100)
             self.curve_rotatometer_fit.setData(x, self.number_counts_2[0] * 4 * (1 / x) *1e-10)
 
-        print(smallest_growing_particle, p_i - p_f)
+        #print("N", "%.2e"%n, "dpres", round(p_i - p_f))
 
     @staticmethod
     def read_to_list(folder, start, stop):
@@ -410,7 +410,7 @@ class Main:
             dd = d_second - d_first
 
             # takes in account that the intervals are different size, so the value is arbitarily number count per >>> NANOMETER <<<
-            self.particle_distribution_y[i] = (dn / (dd * 1e9))
+            self.particle_distribution_y[i] = (-dn / (dd * 1e9))
             self.particle_distribution_x[i] = (d_first + dd / 2)
 
             # if (i in range(10)):
@@ -452,11 +452,11 @@ class Main:
         #self.plot_simulate.setLabel("left", "ext", "")
         #self.plot_simulate.setLabel("bottom", "t", "s")
 
-        self.plot_distribution.setLabel("left", "N ×10¹⁰")
+        self.plot_distribution.setLabel("left", "N ×10¹⁰ (#/m³)")
         self.plot_distribution.setLabel("bottom", "d_p", "m")
         self.plot_distribution.showGrid(y=True)
 
-        self.plot_rotatometer.setLabel("left", "N ×10¹⁰")
+        self.plot_rotatometer.setLabel("left", "N ×10¹⁰ (#/m³)")
         self.plot_rotatometer.setLabel("bottom", "laimennusvirtaus")
         self.plot_rotatometer.showGrid(y=True)
 
