@@ -98,7 +98,7 @@ class Main:
         # Text labels for the control window
         labels = ["Measurement number", "Measurement series", "Data type (1:p_diff, 2:p_abs, 3:ext)",
                   "Noice reduction (0 = off)", "", "Particle size (nm) (useless)",
-                  "Particle density (n*1e-10 1/m^3)"]
+                  "Particle density (n*1e10 1/m^3)", "Initial saturation"]
 
         for i, text in enumerate(labels):
             label = QtGui.QLabel()
@@ -147,12 +147,12 @@ class Main:
         # Graph window
         win = pg.GraphicsWindow(title="Cloud formation data analysis")
 
-        self.plot_select = win.addPlot(title="Region selection")
-        self.plot_zoom = win.addPlot(title="Zoom on selected region")
-        self.plot_simulate = win.addPlot(title="Simulation on particle growth")
+        self.plot_select = win.addPlot()#title="Region selection")
+        self.plot_zoom = win.addPlot()#title="Zoom on selected region")
+        #self.plot_simulate = win.addPlot()#title="Simulation on particle growth")
         win.nextRow()
-        self.plot_distribution = win.addPlot(title="Concentration distribtion")
-        self.plot_rotatometer = win.addPlot(title="Rotatometer_fractions")
+        self.plot_distribution = win.addPlot()#title="Concentration distribtion")
+        self.plot_rotatometer = win.addPlot()#title="Rotatometer_fractions")
 
         self.plot_distribution.addLegend()
         self.plot_rotatometer.addLegend()
@@ -177,11 +177,11 @@ class Main:
 
         self.linear_region.sigRegionChanged.connect(self.update_zoom_plot)
         self.plot_zoom.sigXRangeChanged.connect(self.update_zoom_region)
-        self.plot_zoom.sigRangeChanged.connect(self.update_simulate_plot)
+        #self.plot_zoom.sigRangeChanged.connect(self.update_simulate_plot)
 
         self.line.sigPositionChangeFinished.connect(self.line_moved)
 
-        # win.resize(1100,600)
+        win.resize(940,840)
         self.update_zoom_plot()
 
         # PyQtGraph main loop
@@ -228,6 +228,9 @@ class Main:
             self.data = toolbox_2.remove_noise(self.measurement.p_abs, self.noice_reduction_number)
         elif self.selected_data == 3:
             self.data = toolbox_2.remove_noise(toolbox_2.flip_and_normalize(self.measurement.ext), self.noice_reduction_number)
+            self.plot_zoom.setYRange(-0.1, 1, padding=0)
+        elif self.selected_data == 4:
+            self.data = toolbox_2.remove_noise(self.measurement.ext, self.noice_reduction_number)
         else:
             raise ValueError
 
@@ -239,23 +242,23 @@ class Main:
         if self.first_update:
             self.curve_select = self.plot_select.plot(time, self.data)
             self.curve_zoom = self.plot_zoom.plot(self.measurement.time, self.data)
-            self.curve_simulate = self.plot_simulate.plot()
+            self.curve_simulate = self.plot_zoom.plot(pen=pg.mkPen((100, 255, 200)))
 
-            self.curve_distribution = self.plot_distribution.plot(name="Concentration distribution", symbolBrush=(50, 50, 255), symbolPen='w')
-            self.curve_distribution_cumulative = self.plot_distribution.plot(pen=pg.mkPen((100, 200, 255)), name="Concentration", symbolBrush=(80, 160, 201), symbolPen='w')
-            self.curve_rotatometer = self.plot_rotatometer.plot(name="Concentration measured", symbolBrush=(50, 50, 255), symbolPen='w')
-            self.curve_rotatometer_fit = self.plot_rotatometer.plot(pen=pg.mkPen((100, 200, 255)), name="Concentration ideal")
+            self.curve_distribution_cumulative = self.plot_distribution.plot(pen=pg.mkPen((100, 200, 255)), name="´   Kumulatiivinen pitoisuus", symbolBrush=(80, 160, 201), symbolPen='w')
+            self.curve_distribution = self.plot_distribution.plot(name="Pitoisuusjakauma", symbolBrush=(50, 50, 255), symbolPen='w')
+            self.curve_rotatometer = self.plot_rotatometer.plot(name="Mitattu pitoisuus", symbolBrush=(50, 50, 255), symbolPen='w')
+            self.curve_rotatometer_fit = self.plot_rotatometer.plot(pen=pg.mkPen((100, 255, 200)), name="´  Ideaalinen pitoisuus")
 
             self.first_update = False
         else:
             self.curve_select.setData(time, self.data)
             self.curve_zoom.setData(time, self.data)
 
-            self.curve_distribution.setData(self.particle_distribution_x, self.particle_distribution_y)
-            self.curve_distribution_cumulative.setData(self.smallest_particles, self.number_counts)
-            self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]), self.number_counts_2)
+            self.curve_distribution.setData(self.particle_distribution_x, self.particle_distribution_y*1e-10)
+            self.curve_distribution_cumulative.setData(self.smallest_particles, self.number_counts*1e-10)
+            self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]), self.number_counts_2*1e-10)
             x = np.linspace(3.5, 20, 100)
-            self.curve_rotatometer_fit.setData(x, self.number_counts_2[0]*4*(1/x))
+            self.curve_rotatometer_fit.setData(x, self.number_counts_2[0]*4*(1/x)*1e-10)
 
         if self.simulate_bool:
             self.simulation()
@@ -326,17 +329,19 @@ class Main:
 
             self.update_distribution()
             # Update plot
-            self.curve_distribution.setData(self.particle_distribution_x, self.particle_distribution_y)
-            self.curve_distribution_cumulative.setData(self.smallest_particles, self.number_counts)
+            self.curve_distribution.setData(self.particle_distribution_x, self.particle_distribution_y*1e-10)
+            self.curve_distribution_cumulative.setData(self.smallest_particles, self.number_counts*1e-10)
 
         # measurement series 2
         elif self.selected_data == 3 and self.meas_selected_series == 2:
             index = self.meas_selected_number - 1       # begins from 1, 0th measurement is just copy of 8th
             self.number_counts_2[index] = n
 
-            self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]), self.number_counts_2)
+            self.curve_rotatometer.setData(np.array([4, 6, 8, 10, 12, 14, 16, 18]), self.number_counts_2*1e-10)
             x = np.linspace(3.5, 20, 100)
-            self.curve_rotatometer_fit.setData(x, self.number_counts_2[0] * 4 * (1 / x))
+            self.curve_rotatometer_fit.setData(x, self.number_counts_2[0] * 4 * (1 / x) *1e-10)
+
+        print(smallest_growing_particle, p_i - p_f)
 
     @staticmethod
     def read_to_list(folder, start, stop):
@@ -389,7 +394,7 @@ class Main:
                   round((p_i - p_f) / 1000, 2), "kPa)", " pressure change and ", self.saturation_percentage,
                   "% humidity ", sep="")
 
-        self.curve_simulate.setData(time2, size)
+        self.curve_simulate.setData(time2+0.05, size)
         self.simulate_bool = False
 
     def update_distribution(self):
@@ -427,26 +432,32 @@ class Main:
         """
 
         if 1 <= self.selected_data <= 2:
-            self.plot_select.setLabel("left", "P", "Pa")
+            self.plot_select.setLabel("left", "P (kPa)")
             self.plot_select.setLabel("bottom", "t", "s")
-            self.plot_zoom.setLabel("left", "P", "Pa")
+            self.plot_zoom.setLabel("left", "P (kPa)")
             self.plot_zoom.setLabel("bottom", "t", "s")
 
-        if self.selected_data == 3:
+        elif self.selected_data == 3:
             self.plot_select.setLabel("left", "ext", "")
             self.plot_select.setLabel("bottom", "t", "s")
             self.plot_zoom.setLabel("left", "ext", "")
             self.plot_zoom.setLabel("bottom", "t", "s")
 
-        self.plot_simulate.setLabel("left", "ext")
-        self.plot_simulate.setLabel("bottom", "t", "s")
+        elif self.selected_data == 4:
+            self.plot_select.setLabel("left", "U", "V")
+            self.plot_select.setLabel("bottom", "t", "s")
+            self.plot_zoom.setLabel("left", "U", "V")
+            self.plot_zoom.setLabel("bottom", "t", "s")
 
-        self.plot_distribution.setLabel("left", "N")
+        #self.plot_simulate.setLabel("left", "ext", "")
+        #self.plot_simulate.setLabel("bottom", "t", "s")
+
+        self.plot_distribution.setLabel("left", "N ×10¹⁰")
         self.plot_distribution.setLabel("bottom", "d_p", "m")
         self.plot_distribution.showGrid(y=True)
 
-        self.plot_rotatometer.setLabel("left", "N")
-        self.plot_rotatometer.setLabel("bottom", "stream value 2 to dilution stream value x")
+        self.plot_rotatometer.setLabel("left", "N ×10¹⁰")
+        self.plot_rotatometer.setLabel("bottom", "laimennusvirtaus")
         self.plot_rotatometer.showGrid(y=True)
 
 
