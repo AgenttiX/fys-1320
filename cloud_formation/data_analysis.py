@@ -96,8 +96,8 @@ class Main:
         widget2.setLayout(layout)
 
         # Text labels for the control window
-        labels = ["Measurement number", "Measurement series", "Data type (1:p_diff, 2:p_abs, 3:ext)",
-                  "Noice reduction (0 = off)", "", "Particle size (nm) (useless)",
+        labels = ["Measurement number", "Measurement series", "Data type (1:p_diff, 2:p_abs, 3:ext, 4:U)",
+                  "Noise reduction (0 = off)", "", "Particle size (nm) (useless)",
                   "Particle density (n*1e10 1/m^3)", "Initial saturation"]
 
         for i, text in enumerate(labels):
