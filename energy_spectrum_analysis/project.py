@@ -28,7 +28,6 @@ def set_plot_energy(plot_energy):
     :param plot_energy: pyqtgraph plot object, created by win.addPlot()
     :return:
     """
-
     plot_energy.addLegend()
     plot_energy.setLabel("left", "E", "J")
     plot_energy.setLabel("bottom", "theta", "rad")
@@ -45,53 +44,52 @@ def set_plot_energy(plot_energy):
     curve_energy_electron.setData(theta, E_2e)
 
 
-def set_plot_gauss(plot_gauss):
+def set_plot_probability(plot_probability, mu = 0, x0 = 0, var = 3, gamma = 1.38, x = np.linspace(-5,5,100)):
     """
-    Plots Gauss probability distribution and cumulative distribution.
-    :param plot_gauss: pyqtgraph plot object, created by win.addPlot()
+    Plots Gauss and Cauchy probability distribution.
+    :param plot_probability: pyqtgraph plot object, created by win.addPlot()
+    :param mu: expected value for Gauss
+    :param x0: center point for Couchy
+    :param var: variance for Gauss
+    :param gamma: deviation for Couchy
     :return:
     """
-    plot_gauss.addLegend()
-    plot_gauss.setLabel("left", "y")
-    plot_gauss.setLabel("bottom", "x")
+    plot_probability.addLegend()
+    plot_probability.setLabel("left", "y")
+    plot_probability.setLabel("bottom", "x")
 
-    curve_probability = plot_gauss.plot(pen=pg.mkPen((100, 255, 150)), name="Probability distribution")
-    curve_cumulative = plot_gauss.plot(pen=pg.mkPen((100, 150, 255)), name="Cumulative distribution")
+    curve_probability_gauss = plot_probability.plot(pen=pg.mkPen((100, 150, 255)), name="Gauss")
+    curve_probability_cauchy = plot_probability.plot(pen=pg.mkPen((100, 255, 150)), name="Cauchy")
 
-    x = np.linspace(-5,5,100)
-    mu = 0
-    var = 3
+    probability_gauss = toolbox.gauss(x,mu,var)
+    probability_cachy = toolbox.cauchy(x,x0,gamma)
 
-    prob = toolbox.gauss(x,mu,var)
-    cumul = toolbox.gauss_cumulative(x, mu, var)
-
-    curve_probability.setData(x, prob)
-    curve_cumulative.setData(x, cumul)
+    curve_probability_gauss.setData(x, probability_gauss)
+    curve_probability_cauchy.setData(x, probability_cachy)
 
 
-def set_plot_cauchy(plot_cauchy):
+def set_plot_cumulative(plot_cumulative, mu=0, x0=0, var=3, gamma=1.38, x = np.linspace(-5,5,100)):
     """
-    Plots Cauchy probability distribution and cumulative distribution.
-    :param plot_cauchy: pyqtgraph plot object, created by win.addPlot()
+    Plots Gauss and Cauchy cumulative distribution.
+    :param plot_cumulative: pyqtgraph plot object, created by win.addPlot()
+    :param mu: expected value for Gauss
+    :param x0: center point for Couchy
+    :param var: variance for Gauss
+    :param gamma: deviation for Couchy
     :return:
     """
+    plot_cumulative.addLegend()
+    plot_cumulative.setLabel("left", "y")
+    plot_cumulative.setLabel("bottom", "x")
 
-    plot_cauchy.addLegend()
-    plot_cauchy.setLabel("left", "y")
-    plot_cauchy.setLabel("bottom", "x")
+    curve_cumulative_gauss = plot_cumulative.plot(pen=pg.mkPen((100, 150, 255)), name="Gauss")
+    curve_cumulative_cauchy = plot_cumulative.plot(pen=pg.mkPen((100, 255, 150)), name="Cauchy")
 
-    curve_probability = plot_cauchy.plot(pen=pg.mkPen((100, 255, 150)), name="Probability distribution")
-    curve_cumulative = plot_cauchy.plot(pen=pg.mkPen((100, 150, 255)), name="Cumulative distribution")
+    cumulative_gauss = toolbox.gauss_cumulative(x, mu, var)
+    cumulative_cauchy = toolbox.cauchy_cumulative(x, x0, gamma)
 
-    x = np.linspace(-5,5,100)
-    x0 = 0
-    gamma = 3
-
-    prob = toolbox.cauchy(x,x0,gamma)
-    cumul = toolbox.cauchy_cumulative(x, x0, gamma)
-
-    curve_probability.setData(x, prob)
-    curve_cumulative.setData(x, cumul)
+    curve_cumulative_gauss.setData(x, cumulative_gauss)
+    curve_cumulative_cauchy.setData(x, cumulative_cauchy)
 
 
 
@@ -104,13 +102,17 @@ def main():
     plot_energy = win.addPlot(title="Energy by angle")
     set_plot_energy(plot_energy)
 
-    plot_gauss = win.addPlot(title="Gauss distribution")
-    set_plot_gauss(plot_gauss)
+    mu, x0 = 0, 0
+    var, gamma = 0.394, 0.5
+    x = np.linspace(-2, 2, 1000)
+
+    plot_probability = win.addPlot(title="Probability distribution")
+    set_plot_probability(plot_probability, mu, x0, var, gamma, x)
 
     win.nextRow()
 
-    plot_cauchy = win.addPlot(title="Cauchy distribution")
-    set_plot_cauchy(plot_cauchy)
+    plot_cumulative = win.addPlot(title="Cumulative distribution")
+    set_plot_cumulative(plot_cumulative, mu, x0, var, gamma, x)
 
     # PyQtGraph main loop
     qapp.exec_()
