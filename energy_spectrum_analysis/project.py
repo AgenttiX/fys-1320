@@ -21,7 +21,6 @@ import numpy as np
 import toolbox
 
 
-
 def set_plot_energy(plot_energy):
     """
     Plots photon and electron energy in compton scattering by function of scattered photon angle.
@@ -35,16 +34,16 @@ def set_plot_energy(plot_energy):
     curve_energy_photon = plot_energy.plot(pen=pg.mkPen((100, 255, 150)), name="fotoni")
     curve_energy_electron = plot_energy.plot(pen=pg.mkPen((100, 150, 255)), name="elektroni")
 
-    theta = np.linspace(-np.pi,np.pi,1000)
+    theta = np.linspace(-np.pi, np.pi, 1000)
 
-    E_2f = toolbox.E_2f_fun(theta)
-    E_2e = toolbox.E_2e_fun(theta)
+    energy_2f = toolbox.e_2f_fun(theta)
+    energy_2e = toolbox.e_2e_fun(theta)
 
-    curve_energy_photon.setData(theta, E_2f/1.60218e-19)
-    curve_energy_electron.setData(theta, E_2e/1.60218e-19)
+    curve_energy_photon.setData(theta, energy_2f/1.60218e-19)
+    curve_energy_electron.setData(theta, energy_2e/1.60218e-19)
 
 
-def set_plot_probability(plot_probability, mu = 0, x0 = 0, var = 3, gamma = 1.38, x = np.linspace(-5,5,100)):
+def set_plot_probability(plot_probability, mu=0, x0=0, var=3.0, gamma=1.38, x=np.linspace(-5, 5, 100)):
     """
     Plots Gauss and Cauchy probability distribution.
     :param plot_probability: pyqtgraph plot object, created by win.addPlot()
@@ -52,6 +51,7 @@ def set_plot_probability(plot_probability, mu = 0, x0 = 0, var = 3, gamma = 1.38
     :param x0: center point for Couchy
     :param var: variance for Gauss
     :param gamma: deviation for Couchy
+    :param x: TODO
     :return:
     """
     plot_probability.addLegend()
@@ -61,14 +61,14 @@ def set_plot_probability(plot_probability, mu = 0, x0 = 0, var = 3, gamma = 1.38
     curve_probability_gauss = plot_probability.plot(pen=pg.mkPen((100, 150, 255)), name="Gauss")
     curve_probability_cauchy = plot_probability.plot(pen=pg.mkPen((100, 255, 150)), name="Cauchy")
 
-    probability_gauss = toolbox.gauss(x,mu,var)
-    probability_cachy = toolbox.cauchy(x,x0,gamma)
+    probability_gauss = toolbox.gauss(x, mu, var)
+    probability_cachy = toolbox.cauchy(x, x0, gamma)
 
     curve_probability_gauss.setData(x, probability_gauss)
     curve_probability_cauchy.setData(x, probability_cachy)
 
 
-def set_plot_cumulative(plot_cumulative, mu=0, x0=0, var=3, gamma=1.38, x = np.linspace(-5,5,100)):
+def set_plot_cumulative(plot_cumulative, mu=0, x0=0, var=3.0, gamma=1.38, x=np.linspace(-5, 5, 100)):
     """
     Plots Gauss and Cauchy cumulative distribution.
     :param plot_cumulative: pyqtgraph plot object, created by win.addPlot()
@@ -76,6 +76,7 @@ def set_plot_cumulative(plot_cumulative, mu=0, x0=0, var=3, gamma=1.38, x = np.l
     :param x0: center point for Couchy
     :param var: variance for Gauss
     :param gamma: deviation for Couchy
+    :param x: TODO
     :return:
     """
     plot_cumulative.addLegend()
@@ -92,33 +93,31 @@ def set_plot_cumulative(plot_cumulative, mu=0, x0=0, var=3, gamma=1.38, x = np.l
     curve_cumulative_cauchy.setData(x, cumulative_cauchy)
 
 
-
 def main():
     pg.setConfigOptions(antialias=True, background="w", foreground="k")
     qapp = pg.mkQApp()
 
     win = pg.GraphicsWindow(title="Pre-report")
 
-    plot_energy = win.addPlot()#title="Energy by angle")
+    plot_energy = win.addPlot()  # title="Energy by angle")
     set_plot_energy(plot_energy)
 
     mu, x0 = 0, 0
     var, gamma = 0.394, 0.5
     x = np.linspace(-2.5, 2.5, 1000)
 
-    plot_probability = win.addPlot()#title="Probability distribution")
+    plot_probability = win.addPlot()  # title="Probability distribution")
     set_plot_probability(plot_probability, mu, x0, var, gamma, x)
 
     win.nextRow()
 
-    plot_cumulative = win.addPlot()#title="Cumulative distribution")
+    plot_cumulative = win.addPlot()  # title="Cumulative distribution")
     set_plot_cumulative(plot_cumulative, mu, x0, var, gamma, x)
 
-    win.resize(950,800)
+    win.resize(950, 800)
 
     # PyQtGraph main loop
     qapp.exec_()
-
 
 
 main()
