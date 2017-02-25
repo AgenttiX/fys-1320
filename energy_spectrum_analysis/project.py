@@ -29,19 +29,19 @@ def set_plot_energy(plot_energy):
     :return:
     """
     plot_energy.addLegend()
-    plot_energy.setLabel("left", "E", "J")
-    plot_energy.setLabel("bottom", "theta", "rad")
+    plot_energy.setLabel("left", "E", "eV")
+    plot_energy.setLabel("bottom", "θ", "rad")
 
-    curve_energy_photon = plot_energy.plot(pen=pg.mkPen((100, 255, 150)), name="photon")
-    curve_energy_electron = plot_energy.plot(pen=pg.mkPen((100, 150, 255)), name="electron")
+    curve_energy_photon = plot_energy.plot(pen=pg.mkPen((100, 255, 150)), name="fotoni")
+    curve_energy_electron = plot_energy.plot(pen=pg.mkPen((100, 150, 255)), name="elektroni")
 
     theta = np.linspace(-np.pi,np.pi,1000)
 
     E_2f = toolbox.E_2f_fun(theta)
     E_2e = toolbox.E_2e_fun(theta)
 
-    curve_energy_photon.setData(theta, E_2f)
-    curve_energy_electron.setData(theta, E_2e)
+    curve_energy_photon.setData(theta, E_2f/1.60218e-19)
+    curve_energy_electron.setData(theta, E_2e/1.60218e-19)
 
 
 def set_plot_probability(plot_probability, mu = 0, x0 = 0, var = 3, gamma = 1.38, x = np.linspace(-5,5,100)):
@@ -99,20 +99,22 @@ def main():
 
     win = pg.GraphicsWindow(title="Pre-report")
 
-    plot_energy = win.addPlot(title="Energy by angle")
+    plot_energy = win.addPlot()#title="Energy by angle")
     set_plot_energy(plot_energy)
 
     mu, x0 = 0, 0
     var, gamma = 0.394, 0.5
-    x = np.linspace(-2, 2, 1000)
+    x = np.linspace(-2.5, 2.5, 1000)
 
-    plot_probability = win.addPlot(title="Probability distribution")
+    plot_probability = win.addPlot()#title="Probability distribution")
     set_plot_probability(plot_probability, mu, x0, var, gamma, x)
 
     win.nextRow()
 
-    plot_cumulative = win.addPlot(title="Cumulative distribution")
+    plot_cumulative = win.addPlot()#title="Cumulative distribution")
     set_plot_cumulative(plot_cumulative, mu, x0, var, gamma, x)
+
+    win.resize(950,800)
 
     # PyQtGraph main loop
     qapp.exec_()
