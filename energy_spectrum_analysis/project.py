@@ -48,9 +48,9 @@ def set_plot_probability(plot_probability, mu=0, x0=0, var=3.0, gamma=1.38, x=np
     Plots Gauss and Cauchy probability distribution.
     :param plot_probability: pyqtgraph plot object, created by win.addPlot()
     :param mu: expected value for Gauss
-    :param x0: center point for Couchy
+    :param x0: center point for Cauchy
     :param var: variance for Gauss
-    :param gamma: deviation for Couchy
+    :param gamma: deviation for Cauchy
     :param x: TODO
     :return:
     """
@@ -73,9 +73,9 @@ def set_plot_cumulative(plot_cumulative, mu=0, x0=0, var=3.0, gamma=1.38, x=np.l
     Plots Gauss and Cauchy cumulative distribution.
     :param plot_cumulative: pyqtgraph plot object, created by win.addPlot()
     :param mu: expected value for Gauss
-    :param x0: center point for Couchy
+    :param x0: center point for Cauchy
     :param var: variance for Gauss
-    :param gamma: deviation for Couchy
+    :param gamma: deviation for Cauchy
     :param x: TODO
     :return:
     """
