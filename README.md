@@ -61,6 +61,12 @@ Files
   - A library for data_analysis.py. Requires toolbox.py.
 
 ## Energy spectrum analysis
-An experiment about Compton scattering.
+An experiment about [Compton scattering](https://en.wikipedia.org/wiki/Compton_scattering).
+
+Files
+- project.py
+  - The program for generating the graphs of our pre-report
+- toolbox.py
+  - A library for project.py
 
 Work in progress.
