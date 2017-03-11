@@ -1,0 +1,195 @@
+# Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
+
+## @package data_analysis
+# This program is for analysing data gathered from spectrometer in Compton
+# energy spectrum analyis -physics experiment.
+
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtGui
+import numpy as np
+
+class Measurement:
+    """ This class represents a single measurement and its data """
+    def __init__(self, path_to_file):
+        a, b, c = self.read_data(path_to_file)
+        self.count = a
+        self.channel = b
+        self.energy = (c[0]*b + c[1]) * 1000 * 1.60218e-19
+
+
+    def read_data(self, path_to_file):
+        """
+        Reads .txt data files
+        :param path_to_file:
+        :return:    numpy_array count_array         # counts
+                    numpy_array channel_array       # respective channels
+                    list        coefficients        # a,b (a*x + b)-coefficients
+                    list<tuple> calibration         # calibration channel-value -pairs (values in keV)
+        """
+        if path_to_file[-4:] != ".txt":
+            raise "file must be .txt"
+        file = open(path_to_file)
+        line = ""
+        coefficients = []
+
+        # Skips to correct line, and determines wheter it is calibration data or calibrated data
+        calibration = False
+        for x in range(10):
+            if (file.readline() == "Channel\tValue\n"):
+                calibration = False
+                break
+            if (file.readline() =="Channel\tData\n"):
+                calibration = True
+                break
+            if (x==9):
+                raise "malformed txt-file"
+
+        # Calibrated data:
+        if (calibration == False):
+            # Reads channel-value calibration-pairs (unused)
+            calibration = []
+            for x in range(3):
+                channel, value = file.readline().split()
+                calibration.append((float(channel), float(value)))
+            file.readline()     # skip the "A  B  C" -line
+
+            # Reads A, B, C -coefficients
+            c = file.readline().split()
+            coefficients = [float(c[1]), float(c[0])]
+            for x in range(4): # Skipping to correct line
+                line = file.readline()
+
+        # Calibration data:
+        if (calibration == True):
+            line = file.readline()
+            # in case of calibration data coefficients are set to match others
+            coefficients = [0.0223487, -0.0131686]
+
+        # Reads the vectors
+        channel_list = []   # "Channel"
+        count_list = []     # "Data"
+        while (line != ""):
+            channel, count = line.split()
+            channel_list.append(int(channel))
+            count_list.append(int(count))
+            line = file.readline()
+        file.close()
+
+        channel_array = np.array(channel_list)
+        count_array= np.array(count_list)
+
+        return count_array, channel_array, coefficients
+
+
+
+
+
+
+class Main:
+    def __init__(self):
+        pg.setConfigOptions(antialias=True, background="w", foreground="k")
+        qapp = pg.mkQApp()
+
+        self.angles = [75,80]+list(range(105, 160, 5))
+        self.measurement_list = self.read_to_list(self.angles)
+        self.measurement = self.measurement_list[2]
+
+
+        self.selected_angle = 105
+
+
+        # Control window
+        widget2 = QtGui.QWidget()
+        widget2.setWindowTitle("Energy spectrum data analysis")
+        layout = QtGui.QGridLayout()
+        widget2.setLayout(layout)
+
+        labels = ["Angle"]
+        for i, text in enumerate(labels):
+            label = QtGui.QLabel()
+            label.setText(text)
+            layout.addWidget(label, i, 0)
+
+        self.__input_angle = pg.SpinBox(value=self.selected_angle, int=True, minStep=5, step=5)
+        self.__input_angle.editingFinished.connect(self.update_change)
+        layout.addWidget(self.__input_angle, 0, 1)
+        self.__updateButton = QtGui.QPushButton("Update")
+        layout.addWidget(self.__updateButton, 1, 1)
+        self.__updateButton.clicked.connect(self.update_change)
+
+        widget2.show()
+
+
+        # Graph window
+        win = pg.GraphicsWindow(title="Energy spectrum data analysis")
+        self.plot_count = win.addPlot(title="Energy spectrum")
+        self.set_labels()
+        self.curve_count = self.plot_count.plot(self.measurement.energy/1.60218e-19, self.measurement.count,
+                                                pen=pg.mkPen((100, 150, 255)))
+
+
+        # PyQtGraph main loop
+        qapp.exec_()
+
+
+    def read_to_list(self,angles):
+        """
+        Reads all single measurements to one list, notice that it also reads
+        calibration- and block-measurements at angles 75 and 80 respectively.
+        :param angles:
+        :return: measurements-list
+        """
+        measurements = []
+        for angle in angles:
+            if (angle!=75 and angle!=80):
+                measurements.append(Measurement("data/" + str(angle) + ".txt"))
+            elif (angle==75):
+                measurements.append(Measurement("data/calibration.txt"))
+            elif (angle==80):
+                measurements.append(Measurement("data/block-80.txt"))
+        return measurements
+
+    def set_labels(self):
+        """
+        Sets labels for all plots in window
+        :return:
+        """
+        self.plot_count.setLabel("left", "Count")
+        self.plot_count.setLabel("bottom", "E", "eV)")
+
+    def update_change(self):
+        """
+        Updates plots, gets signaled from update-button and change of spinbox value.
+        :return:
+        """
+        self.selected_angle = self.__input_angle.value()
+
+        if self.selected_angle in self.angles:
+            self.measurement = self.measurement_list[self.angles.index(self.selected_angle)]
+        else:
+            raise ValueError
+
+        self.set_labels()
+
+        self.curve_count.setData(self.measurement.energy/1.60218e-19, self.measurement.count)
+
+def main():
+    Main()
+
+
+main()
