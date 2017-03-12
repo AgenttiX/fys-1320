@@ -22,6 +22,14 @@
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
 import numpy as np
+from scipy.optimize import curve_fit
+import toolbox
+
+
+# Constants
+_eV = 1.60218e-19
+_keV = 1.60218e-16
+
 
 class Measurement:
     """ This class represents a single measurement and its data """
@@ -29,7 +37,7 @@ class Measurement:
         a, b, c = self.read_data(path_to_file)
         self.count = a
         self.channel = b
-        self.energy = (c[0]*b + c[1]) * 1000 * 1.60218e-19
+        self.energy = (c[0]*b + c[1]) * _keV
 
 
     def read_data(self, path_to_file):
@@ -100,6 +108,9 @@ class Measurement:
 
 
 
+
+
+
 class Main:
     def __init__(self):
         pg.setConfigOptions(antialias=True, background="w", foreground="k")
@@ -108,9 +119,14 @@ class Main:
         self.angles = [75,80]+list(range(105, 160, 5))
         self.measurement_list = self.read_to_list(self.angles)
         self.measurement = self.measurement_list[2]
+        self.count = self.measurement.count
+        self.energy = self.measurement.energy
+        self.energy_range_indx = [np.argmin(np.abs(self.energy-38*_keV)), np.argmin(np.abs(self.energy-58.5*_keV))]
+
 
 
         self.selected_angle = 105
+        self.correction = False
 
 
         # Control window
@@ -119,7 +135,7 @@ class Main:
         layout = QtGui.QGridLayout()
         widget2.setLayout(layout)
 
-        labels = ["Angle"]
+        labels = ["Angle", "Count correction", "Gauss fit", "Cauchy fit"]
         for i, text in enumerate(labels):
             label = QtGui.QLabel()
             label.setText(text)
@@ -128,8 +144,14 @@ class Main:
         self.__input_angle = pg.SpinBox(value=self.selected_angle, int=True, minStep=5, step=5)
         self.__input_angle.editingFinished.connect(self.update_change)
         layout.addWidget(self.__input_angle, 0, 1)
+        self.__correctionCheckbox = QtGui.QCheckBox()
+        layout.addWidget(self.__correctionCheckbox,1,1)
+        self.__fitGaussCheckbox = QtGui.QCheckBox()
+        layout.addWidget(self.__fitGaussCheckbox, 2, 1)
+        self.__fitCauchyCheckbox = QtGui.QCheckBox()
+        layout.addWidget(self.__fitCauchyCheckbox, 3, 1)
         self.__updateButton = QtGui.QPushButton("Update")
-        layout.addWidget(self.__updateButton, 1, 1)
+        layout.addWidget(self.__updateButton, 4, 1)
         self.__updateButton.clicked.connect(self.update_change)
 
         widget2.show()
@@ -139,8 +161,10 @@ class Main:
         win = pg.GraphicsWindow(title="Energy spectrum data analysis")
         self.plot_count = win.addPlot(title="Energy spectrum")
         self.set_labels()
-        self.curve_count = self.plot_count.plot(self.measurement.energy/1.60218e-19, self.measurement.count,
+        self.curve_count = self.plot_count.plot(self.measurement.energy/_eV, self.measurement.count,
                                                 pen=pg.mkPen((100, 150, 255)))
+        self.curve_gauss = self.plot_count.plot(pen=pg.mkPen((100, 255, 150), width=2))
+        self.curve_cauchy = self.plot_count.plot(pen=pg.mkPen((255, 150, 100), width=2))
 
 
         # PyQtGraph main loop
@@ -174,19 +198,95 @@ class Main:
 
     def update_change(self):
         """
-        Updates plots, gets signaled from update-button and change of spinbox value.
+        Updates plots.
+        Gets signaled from update-button and change of spinbox value.
         :return:
         """
         self.selected_angle = self.__input_angle.value()
+        self.correction = self.__correctionCheckbox.checkState()
+        self.__fitCauchyCheckbox.checkState()
 
+        # Energy spectrum
         if self.selected_angle in self.angles:
             self.measurement = self.measurement_list[self.angles.index(self.selected_angle)]
+            self.energy = self.measurement.energy
+            if (self.correction):
+                self.count = self.measurement.count / self.count_correction(self.energy)
+            else:
+                self.count = self.measurement.count
         else:
             raise ValueError
 
-        self.set_labels()
 
-        self.curve_count.setData(self.measurement.energy/1.60218e-19, self.measurement.count)
+        # Gauss
+        if (self.__fitGaussCheckbox.checkState()):
+            coeff = self.fit_gauss(self.energy,self.count)
+            self.curve_gauss.setData(self.energy/_eV, toolbox.gauss(self.energy,coeff[0],coeff[1], coeff[2]))
+        else:
+            self.curve_gauss.setData([0],[0])
+        # Cauchy
+        if (self.__fitCauchyCheckbox.checkState()):
+            coeff = self.fit_cauchy(self.energy, self.count)
+            self.curve_cauchy.setData(self.energy/_eV, toolbox.cauchy(self.energy, coeff[0], coeff[1], coeff[2]))
+        else:
+            self.curve_cauchy.setData([0],[0])
+
+
+
+        self.curve_count.setData(self.energy/_eV, self.count)
+
+    def count_correction(self,energy):
+        """
+        Returns efficiency factors for energies measured by XR100CR x-ray detector.
+        Assumin 500e-6m thick Si-detector and only concidering range of 3-70 keV
+        https://www1.aps.anl.gov/files/download/DET/Detector-Pool/Spectroscopic-Detectors/Amptek_CdZnTe/XR100CR_PX2_rev080713.pdf
+        :param energy: energy-vector
+        :return: (inverse) coefficient vector
+        """
+
+        # Photon energies (x), and corresponding measurement efficiencies (y)
+        x = np.array([-10, 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) * _keV # (energy[0] < 0)
+        y = np.array([1, 1, 1, 0.4, 0.12, 0.05, 0.023, 0.012, 0.01, 0.01, 0.01, 0.01])
+
+        factor = np.zeros(len(energy))
+
+        for i,en in enumerate(energy):
+            for j in range(len(x)-1):
+                if (x[j] <= en and en < x[j+1]):
+                    # linear interpolation
+                    factor[i] = (y[j+1]-y[j])/(x[j+1]-x[j]) * (en-x[j]) + y[j]
+                    break
+        return factor
+
+    def fit_gauss(self,energy,counts):
+        """
+        Fits non-linear least squares gauss-fit for scattered peak.
+        :param energy: energy-vector
+        :param counts: count-vector
+        :return: parameters for gauss() -function
+        """
+        a = self.energy_range_indx[0]
+        b = self.energy_range_indx[1]
+        # gauss(x, mu, var)
+        guess = [52*_keV, _keV**2, 1e-12]
+        coeff, cov = curve_fit(toolbox.gauss, energy[a:b], counts[a:b], p0 = guess)
+        return coeff
+
+    def fit_cauchy(self,energy,counts):
+        """
+        Fits non-linear least squares cauchy-fit for scattered peak.
+        :param energy: energy-vector
+        :param counts: count-vector
+        :return: parameters for cauchy() -function
+        """
+        a = self.energy_range_indx[0]
+        b = self.energy_range_indx[1]
+        # cauchy(x, x0, gamma)
+        guess = [52*_keV, _keV, 1e-12]
+        coeff, cov = curve_fit(toolbox.cauchy, energy[a:b], counts[a:b], p0 = guess)
+        return coeff
+
+
 
 def main():
     Main()

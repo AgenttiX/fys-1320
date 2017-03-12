@@ -52,27 +52,29 @@ def e_2e_fun(theta, e_init=e_1f):
     return e_init / (((m_e * c ** 2) / e_init) * (1 / (1 - np.cos(theta))) + 1)
 
 
-def gauss(x, mu, var):
+def gauss(x, mu, var, a=1):
     """
     Gauss distribution value at x
     :param x:
     :param mu: expected value
     :param var: variance, (sigma^2)
+    :param a: coefficient in cases total area != 1
     :return:
     """
-    return 1/(np.sqrt(2*var*np.pi)) * np.exp(- (x-mu)**2/(2*var))
+    return a/(np.sqrt(2*var*np.pi)) * np.exp(- (x-mu)**2/(2*var))
 
 
-def gauss_cumulative(x, mu, var):
+def gauss_cumulative(x, mu, var, a=1):
     """
         Gauss cumulative distribution value at x
         :param x:
         :param mu: expected value
         :param var: variance, (sigma^2)
+        :param a: coefficient in cases x_inf != 1
         :return:
         """
     # Gauss distribution function:
-    disrt_fun = lambda x_1: gauss(x_1, mu, var)
+    disrt_fun = lambda x_1: gauss(x_1, mu, var, a)
     # Cumulative function for cell element by numeric integration:
     cumul_fun = lambda x_2: integrate.quad(disrt_fun, -np.inf, x_2)[0]  # [0] integral, [1] absolute error in integral
     # Vectorized function:
@@ -82,23 +84,25 @@ def gauss_cumulative(x, mu, var):
     return cumul_vec
 
 
-def cauchy(x, x0, gamma):
+def cauchy(x, x0, gamma, a=1):
     """
     Cauchy distribution aka. Lorentz distribution
     :param x:
     :param x0: location parameter (not the expected value, as it is undefined)
     :param gamma: half-width at half maxium (not variance, as it is undefined)
+    :param a: coefficient in cases total area != 1
     :return:
     """
-    return 1 / (np.pi*gamma*(1 + ((x-x0)/gamma)**2))
+    return a / (np.pi*gamma*(1 + ((x-x0)/gamma)**2))
 
 
-def cauchy_cumulative(x, x0, gamma):
+def cauchy_cumulative(x, x0, gamma, a=1):
     """
     Cauchy distribution aka. Lorentz distribution
     :param x:
     :param x0: location parameter (not the expected value, as it is undefined)
     :param gamma: half-width at half maxium (not variance, as it is undefined)
+    :param a: coefficient in cases x_inf != 1
     :return:
     """
-    return 1/np.pi * np.arctan((x-x0)/gamma) + 0.5
+    return a/np.pi * np.arctan((x-x0)/gamma) + 0.5
