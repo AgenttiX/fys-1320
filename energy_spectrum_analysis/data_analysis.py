@@ -118,7 +118,7 @@ class Main:
 
         self.angles = [75,80]+list(range(105, 160, 5))
         self.measurement_list = self.read_to_list(self.angles)
-        self.measurement = self.measurement_list[2]
+        self.measurement = self.measurement_list[2] # initial value is set to measurement at 105 degrees
         self.count = self.measurement.count
         self.energy = self.measurement.energy
         self.energy_range_indx = [np.argmin(np.abs(self.energy-38*_keV)), np.argmin(np.abs(self.energy-58.5*_keV))]
@@ -160,11 +160,17 @@ class Main:
         # Graph window
         win = pg.GraphicsWindow(title="Energy spectrum data analysis")
         self.plot_count = win.addPlot(title="Energy spectrum")
+        self.plot_diff = win.addPlot(title="Difference to expected")
         self.set_labels()
         self.curve_count = self.plot_count.plot(self.measurement.energy/_eV, self.measurement.count,
                                                 pen=pg.mkPen((100, 150, 255)))
         self.curve_gauss = self.plot_count.plot(pen=pg.mkPen((100, 255, 150), width=2))
         self.curve_cauchy = self.plot_count.plot(pen=pg.mkPen((255, 150, 100), width=2))
+        self.curve_diff_measured = self.plot_diff.plot(pen=pg.mkPen((100, 150, 255)))
+        self.curve_diff_expected = self.plot_diff.plot(pen=pg.mkPen((100, 255, 150)))
+
+        win.resize(950, 600)
+        self.compare_to_excepted()
 
 
         # PyQtGraph main loop
@@ -194,7 +200,11 @@ class Main:
         :return:
         """
         self.plot_count.setLabel("left", "Count")
-        self.plot_count.setLabel("bottom", "E", "eV)")
+        self.plot_count.setLabel("bottom", "E", "eV")
+
+        self.plot_diff.setLabel("left", "E", "eV")
+        self.plot_diff.setLabel("bottom", "angle")
+
 
     def update_change(self):
         """
@@ -204,7 +214,7 @@ class Main:
         """
         self.selected_angle = self.__input_angle.value()
         self.correction = self.__correctionCheckbox.checkState()
-        self.__fitCauchyCheckbox.checkState()
+        # self.__fitCauchyCheckbox.checkState()
 
         # Energy spectrum
         if self.selected_angle in self.angles:
@@ -217,17 +227,20 @@ class Main:
         else:
             raise ValueError
 
+        # [a:b] is the range between which the mean square distribution fit is made.
+        a = self.energy_range_indx[0]
+        b = self.energy_range_indx[1]
 
         # Gauss
         if (self.__fitGaussCheckbox.checkState()):
-            coeff = self.fit_gauss(self.energy,self.count)
-            self.curve_gauss.setData(self.energy/_eV, toolbox.gauss(self.energy,coeff[0],coeff[1], coeff[2]))
+            coeff = self.fit_gauss(self.energy[a:b],self.count[a:b])
+            self.curve_gauss.setData(self.energy[a:b]/_eV, toolbox.gauss(self.energy[a:b],coeff[0],coeff[1], coeff[2]))
         else:
             self.curve_gauss.setData([0],[0])
         # Cauchy
         if (self.__fitCauchyCheckbox.checkState()):
-            coeff = self.fit_cauchy(self.energy, self.count)
-            self.curve_cauchy.setData(self.energy/_eV, toolbox.cauchy(self.energy, coeff[0], coeff[1], coeff[2]))
+            coeff = self.fit_cauchy(self.energy[a:b], self.count[a:b])
+            self.curve_cauchy.setData(self.energy[a:b]/_eV, toolbox.cauchy(self.energy[a:b], coeff[0], coeff[1], coeff[2]))
         else:
             self.curve_cauchy.setData([0],[0])
 
@@ -265,11 +278,9 @@ class Main:
         :param counts: count-vector
         :return: parameters for gauss() -function
         """
-        a = self.energy_range_indx[0]
-        b = self.energy_range_indx[1]
         # gauss(x, mu, var)
         guess = [52*_keV, _keV**2, 1e-12]
-        coeff, cov = curve_fit(toolbox.gauss, energy[a:b], counts[a:b], p0 = guess)
+        coeff, cov = curve_fit(toolbox.gauss, energy, counts, p0 = guess)
         return coeff
 
     def fit_cauchy(self,energy,counts):
@@ -279,12 +290,45 @@ class Main:
         :param counts: count-vector
         :return: parameters for cauchy() -function
         """
-        a = self.energy_range_indx[0]
-        b = self.energy_range_indx[1]
         # cauchy(x, x0, gamma)
         guess = [52*_keV, _keV, 1e-12]
-        coeff, cov = curve_fit(toolbox.cauchy, energy[a:b], counts[a:b], p0 = guess)
+        coeff, cov = curve_fit(toolbox.cauchy, energy, counts, p0 = guess)
         return coeff
+
+    def compare_to_excepted(self):
+        """
+        Prints measured energies and theoretically predicted energies
+        :return:
+        """
+
+        # [a:b] is the range between which the mean square distribution fit is made.
+        a = self.energy_range_indx[0]
+        b = self.energy_range_indx[1]
+
+        # Problem: expected values are two orders of magnitude smaller than measured
+        print("Angle, measured, excepted")
+
+        measured = []
+        excepted = []
+
+        for i, meas in enumerate(self.measurement_list):
+            energy = meas.energy
+            count = meas.count / self.count_correction(self.energy)
+            coeff = self.fit_cauchy(energy[a:b], count[a:b])
+
+            measured_energy_maxium_keV = coeff[0] / _keV
+            excepted_energy_maxium_keV = toolbox.e_2f_fun(self.angles[i]*2*np.pi/360) / _keV
+
+            measured.append(measured_energy_maxium_keV)
+            excepted.append(excepted_energy_maxium_keV)
+
+            #print(self.angles[i], round(measured_energy_maxium_keV,4), round(excepted_energy_maxium_keV,4))
+
+        # (measurement data and block-test at 80 degrees is omitted)
+        self.curve_diff_measured.setData(self.angles[2:], measured[2:])
+        self.curve_diff_expected.setData(self.angles[2:], excepted[2:])
+
+
 
 
 

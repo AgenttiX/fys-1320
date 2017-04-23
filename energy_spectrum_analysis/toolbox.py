@@ -21,7 +21,7 @@ import scipy.integrate as integrate
 
 
 # Natural constants
-m_e = 9.10939e-34
+m_e = 9.10939e-31
 e = 1.60218e-19
 c = 2.99792458e8
 
