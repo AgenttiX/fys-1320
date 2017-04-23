@@ -24,6 +24,7 @@ import scipy.integrate as integrate
 m_e = 9.10939e-31
 e = 1.60218e-19
 c = 2.99792458e8
+h = 6.6260755e-34
 
 # Other constants
 
@@ -32,14 +33,14 @@ c = 2.99792458e8
 e_1f = 59.5409e3 * e
 
 
-def e_2f_fun(theta, e_init=e_1f):
+def e_2f_fun(theta, E_init=e_1f):
     """
     Photon energy after Compton scattering, (using energy e_1f)
     :param theta: angle for scattered photon
-    :param e_init: initial photon energy
+    :param E_init: initial photon energy
     :return:
     """
-    return e_init / (1 + (e_init / (m_e * c ** 2)) * (1 - np.cos(theta)))
+    return E_init / (1 + (E_init / (m_e * c ** 2)) * (1 - np.cos(theta)))
 
 
 def e_2e_fun(theta, e_init=e_1f):
@@ -50,6 +51,24 @@ def e_2e_fun(theta, e_init=e_1f):
     :return:
     """
     return e_init / (((m_e * c ** 2) / e_init) * (1 / (1 - np.cos(theta))) + 1)
+
+
+def klein_nishina(theta, E_init=e_1f):
+    """
+
+    :param theta:
+    :param E_init:
+    :return:
+    """
+    alfa = 1/137
+    r_c = h/(2*np.pi) * m_e * c
+
+    def P(theta):
+        return 1 / (1 + (E_init / (m_e * c ** 2)) * (1 - np.cos(theta)))
+    d_sigma_d_omega = alfa**2 * r_c**2 * P(theta)**2 * (P(theta) + 1/P(theta) -(np.sin(theta))**2) / 2
+
+    return d_sigma_d_omega
+
 
 
 def gauss(x, mu, var, a=1):

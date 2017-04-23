@@ -161,6 +161,8 @@ class Main:
         win = pg.GraphicsWindow(title="Energy spectrum data analysis")
         self.plot_count = win.addPlot(title="Energy spectrum")
         self.plot_diff = win.addPlot(title="Difference to expected")
+        win.nextRow()
+        self.plot_klein_nishina = win.addPlot(title="Klein–Nishina")
         self.set_labels()
         self.curve_count = self.plot_count.plot(self.measurement.energy/_eV, self.measurement.count,
                                                 pen=pg.mkPen((100, 150, 255)))
@@ -169,7 +171,10 @@ class Main:
         self.curve_diff_measured = self.plot_diff.plot(pen=pg.mkPen((100, 150, 255)))
         self.curve_diff_expected = self.plot_diff.plot(pen=pg.mkPen((100, 255, 150)))
 
-        win.resize(950, 600)
+        self.curve_cross_section = self.plot_klein_nishina.plot(pen=pg.mkPen((255, 150, 100)))
+
+
+        win.resize(950, 800)
         self.compare_to_excepted()
 
 
@@ -204,6 +209,7 @@ class Main:
 
         self.plot_diff.setLabel("left", "E", "eV")
         self.plot_diff.setLabel("bottom", "angle")
+        self.plot_diff.setLabel("right", "Klein Nishina")
 
 
     def update_change(self):
@@ -306,10 +312,11 @@ class Main:
         b = self.energy_range_indx[1]
 
         # Problem: expected values are two orders of magnitude smaller than measured
-        print("Angle, measured, excepted")
+        #print("Angle, measured, excepted")
 
         measured = []
         excepted = []
+        cross_sections = []
 
         for i, meas in enumerate(self.measurement_list):
             energy = meas.energy
@@ -318,16 +325,19 @@ class Main:
 
             measured_energy_maxium_keV = coeff[0] / _keV
             excepted_energy_maxium_keV = toolbox.e_2f_fun(self.angles[i]*2*np.pi/360) / _keV
+            cross_section_arbitary = toolbox.klein_nishina(self.angles[i]*2*np.pi/360)
 
             measured.append(measured_energy_maxium_keV)
             excepted.append(excepted_energy_maxium_keV)
+            cross_sections.append(cross_section_arbitary)
 
             #print(self.angles[i], round(measured_energy_maxium_keV,4), round(excepted_energy_maxium_keV,4))
 
         # (measurement data and block-test at 80 degrees is omitted)
         self.curve_diff_measured.setData(self.angles[2:], measured[2:])
         self.curve_diff_expected.setData(self.angles[2:], excepted[2:])
-
+        self.curve_cross_section.setData(self.angles[2:], cross_sections[2:])
+        #self.plot_klein_nishina.setYRange(0,max(cross_sections))
 
 
 
