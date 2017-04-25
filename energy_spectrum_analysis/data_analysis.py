@@ -161,10 +161,12 @@ class Main:
 
         # Graph window
         win = pg.GraphicsWindow(title="Energy spectrum data analysis")
-        self.plot_count = win.addPlot(title="Energy spectrum")
-        self.plot_diff = win.addPlot(title="Difference to expected")
-        ##win.nextRow()
-        self.plot_additional_analyzing = win.addPlot(title="Klein–Nishina, Cauchy in Voigt")
+        self.plot_count = win.addPlot()#title="Energy spectrum")
+        self.plot_diff = win.addPlot()#title="Difference to expected")
+        self.plot_klein_nishina = win.addPlot()#title="Klein–Nishina")
+        win.nextRow()
+        self.plot_cauchy_in_voigt = win.addPlot()#title="Cauchy in Voigt")
+
         self.set_labels()
         self.curve_count = self.plot_count.plot(self.measurement.energy/_eV, self.measurement.count,
                                                 pen=pg.mkPen((70, 170, 255)), name="Mittaus")
@@ -172,14 +174,14 @@ class Main:
         self.curve_cauchy = self.plot_count.plot(pen=pg.mkPen((170, 255, 70), width=2), name="Lorentz")
         self.curve_pseudovoigt = self.plot_count.plot(pen=pg.mkPen((255, 170, 70), width=2), name="Pseudo-Voigt")
 
-        self.curve_diff_measured = self.plot_diff.plot(pen=pg.mkPen((70, 170, 255)), name="Measured energy maxium")
-        self.curve_diff_expected = self.plot_diff.plot(pen=pg.mkPen((70, 255, 170)), name="Compton energy maxium")
+        self.curve_diff_measured = self.plot_diff.plot(pen=pg.mkPen((70, 170, 255)), name="Mitattu energiamaksimi")
+        self.curve_diff_expected = self.plot_diff.plot(pen=pg.mkPen((70, 255, 170)), name="Laskettu energiamaksimi")
 
-        self.curve_cross_section = self.plot_additional_analyzing.plot(pen=pg.mkPen((70, 170, 255)), name="Klein-Nishina relative probability")
-        self.curve_cauchy_fraction = self.plot_additional_analyzing.plot(pen=pg.mkPen(70, 255, 170), name="Fraction of Caychy in Voigt")
+        self.curve_cross_section = self.plot_klein_nishina.plot(pen=pg.mkPen((70, 170, 255)), name="Siroamistodennäköisyys maksimista")
+        self.curve_cauchy_fraction = self.plot_cauchy_in_voigt.plot(pen=pg.mkPen(70, 255, 170), name="Cauchyn osuus Voigt:sta")
 
 
-        win.resize(1800, 600)
+        win.resize(1600, 900)
         # draws measured and compton-calculated figures
         self.compare_to_excepted()
         # draws Klein-Nishina cross sections and voigt cauchy fractions
@@ -212,15 +214,21 @@ class Main:
         Sets labels for all plots in window
         :return:
         """
-        self.plot_count.setLabel("left", "Count")
+        self.plot_count.addLegend()
+        self.plot_count.setLabel("left", "fotonien lukumäärä")
         self.plot_count.setLabel("bottom", "E", "eV")
 
+        self.plot_diff.addLegend()
         self.plot_diff.setLabel("left", "E", "eV")
-        self.plot_diff.setLabel("bottom", "angle")
+        self.plot_diff.setLabel("bottom", "kulma (°) ")
 
-        self.plot_additional_analyzing.setLabel("left", "Klein–Nishina, Cauchy in Voigt")
-        self.plot_additional_analyzing.setLabel("bottom", "angle")
+        #self.plot_klein_nishina.addLegend()
+        self.plot_klein_nishina.setLabel("left", "Todennäköisyys (%)")
+        self.plot_klein_nishina.setLabel("bottom", "kulma (°)")
 
+        #self.plot_cauchy_in_voigt.addLegend()
+        self.plot_cauchy_in_voigt.setLabel("left", "Osuus (%)")
+        self.plot_cauchy_in_voigt.setLabel("bottom", "kulma (°)")
 
 
     def update_change(self):
@@ -264,7 +272,7 @@ class Main:
             coeff = self.fit_pseudovoigt(self.energy[a:b], self.count[a:b])
             self.curve_pseudovoigt.setData(self.energy[a:b]/_eV, toolbox.pseudo_voigt(self.energy[a:b], coeff[0], coeff[1], coeff[2], coeff[3]))
             n = toolbox.voigt_cauchy_percentage(coeff[1], coeff[2])
-            print("toolbox: % cauchy/gauss in voigt", n, "/", 1 - n)
+            #print("toolbox: % cauchy/gauss in voigt", n, "/", 1 - n)
 
         else:
             self.curve_pseudovoigt.setData([0],[0])
@@ -383,15 +391,14 @@ class Main:
             count = meas.count / self.count_correction(self.energy)
             coeff = self.fit_pseudovoigt(energy[a:b], count[a:b])
 
-            cross_section_arbitary = toolbox.klein_nishina(self.angles[i] * 2 * np.pi / 360)
-            cauchy_fraction = toolbox.voigt_cauchy_percentage(coeff[1],coeff[2])
+            cross_section_arbitary = toolbox.klein_nishina(self.angles[i] * 2 * np.pi / 360)/(toolbox.klein_nishina(0)) * 100
+            cauchy_fraction = toolbox.voigt_cauchy_percentage(coeff[1],coeff[2])*100
 
             cross_sections.append(cross_section_arbitary)
             cauchy_fractions.append(cauchy_fraction)
 
-
         # (measurement data and block-test at 80 degrees is omitted)
-        self.curve_cross_section.setData(self.angles[2:], cross_sections[2:]/max(cross_sections))
+        self.curve_cross_section.setData(self.angles[2:], cross_sections[2:])
         self.curve_cauchy_fraction.setData(self.angles[2:], cauchy_fractions[2:])
 
 def main():
