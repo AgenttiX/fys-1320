@@ -135,7 +135,7 @@ class Main:
         layout = QtGui.QGridLayout()
         widget2.setLayout(layout)
 
-        labels = ["Angle", "Count correction", "Gauss fit", "Cauchy fit"]
+        labels = ["Angle", "Count correction", "Gauss fit", "Cauchy fit", "Pseudo-Voigt fit"]
         for i, text in enumerate(labels):
             label = QtGui.QLabel()
             label.setText(text)
@@ -150,8 +150,10 @@ class Main:
         layout.addWidget(self.__fitGaussCheckbox, 2, 1)
         self.__fitCauchyCheckbox = QtGui.QCheckBox()
         layout.addWidget(self.__fitCauchyCheckbox, 3, 1)
+        self.__fitPseudoVoigtCheckbox = QtGui.QCheckBox()
+        layout.addWidget(self.__fitPseudoVoigtCheckbox, 4, 1)
         self.__updateButton = QtGui.QPushButton("Update")
-        layout.addWidget(self.__updateButton, 4, 1)
+        layout.addWidget(self.__updateButton, 5, 1)
         self.__updateButton.clicked.connect(self.update_change)
 
         widget2.show()
@@ -161,21 +163,27 @@ class Main:
         win = pg.GraphicsWindow(title="Energy spectrum data analysis")
         self.plot_count = win.addPlot(title="Energy spectrum")
         self.plot_diff = win.addPlot(title="Difference to expected")
-        win.nextRow()
-        self.plot_klein_nishina = win.addPlot(title="Klein–Nishina")
+        ##win.nextRow()
+        self.plot_additional_analyzing = win.addPlot(title="Klein–Nishina, Cauchy in Voigt")
         self.set_labels()
         self.curve_count = self.plot_count.plot(self.measurement.energy/_eV, self.measurement.count,
-                                                pen=pg.mkPen((100, 150, 255)))
-        self.curve_gauss = self.plot_count.plot(pen=pg.mkPen((100, 255, 150), width=2))
-        self.curve_cauchy = self.plot_count.plot(pen=pg.mkPen((255, 150, 100), width=2))
-        self.curve_diff_measured = self.plot_diff.plot(pen=pg.mkPen((100, 150, 255)))
-        self.curve_diff_expected = self.plot_diff.plot(pen=pg.mkPen((100, 255, 150)))
+                                                pen=pg.mkPen((70, 170, 255)), name="Mittaus")
+        self.curve_gauss = self.plot_count.plot(pen=pg.mkPen((70, 255, 170), width=2), name="Gauss sovite")
+        self.curve_cauchy = self.plot_count.plot(pen=pg.mkPen((170, 255, 70), width=2), name="Lorentz")
+        self.curve_pseudovoigt = self.plot_count.plot(pen=pg.mkPen((255, 170, 70), width=2), name="Pseudo-Voigt")
 
-        self.curve_cross_section = self.plot_klein_nishina.plot(pen=pg.mkPen((255, 150, 100)))
+        self.curve_diff_measured = self.plot_diff.plot(pen=pg.mkPen((70, 170, 255)), name="Measured energy maxium")
+        self.curve_diff_expected = self.plot_diff.plot(pen=pg.mkPen((70, 255, 170)), name="Compton energy maxium")
+
+        self.curve_cross_section = self.plot_additional_analyzing.plot(pen=pg.mkPen((70, 170, 255)), name="Klein-Nishina relative probability")
+        self.curve_cauchy_fraction = self.plot_additional_analyzing.plot(pen=pg.mkPen(70, 255, 170), name="Fraction of Caychy in Voigt")
 
 
-        win.resize(950, 800)
+        win.resize(1800, 600)
+        # draws measured and compton-calculated figures
         self.compare_to_excepted()
+        # draws Klein-Nishina cross sections and voigt cauchy fractions
+        self.additional_analyzing()
 
 
         # PyQtGraph main loop
@@ -209,7 +217,10 @@ class Main:
 
         self.plot_diff.setLabel("left", "E", "eV")
         self.plot_diff.setLabel("bottom", "angle")
-        self.plot_diff.setLabel("right", "Klein Nishina")
+
+        self.plot_additional_analyzing.setLabel("left", "Klein–Nishina, Cauchy in Voigt")
+        self.plot_additional_analyzing.setLabel("bottom", "angle")
+
 
 
     def update_change(self):
@@ -220,7 +231,6 @@ class Main:
         """
         self.selected_angle = self.__input_angle.value()
         self.correction = self.__correctionCheckbox.checkState()
-        # self.__fitCauchyCheckbox.checkState()
 
         # Energy spectrum
         if self.selected_angle in self.angles:
@@ -249,6 +259,15 @@ class Main:
             self.curve_cauchy.setData(self.energy[a:b]/_eV, toolbox.cauchy(self.energy[a:b], coeff[0], coeff[1], coeff[2]))
         else:
             self.curve_cauchy.setData([0],[0])
+        # Pseudo Voigt
+        if (self.__fitPseudoVoigtCheckbox.checkState()):
+            coeff = self.fit_pseudovoigt(self.energy[a:b], self.count[a:b])
+            self.curve_pseudovoigt.setData(self.energy[a:b]/_eV, toolbox.pseudo_voigt(self.energy[a:b], coeff[0], coeff[1], coeff[2], coeff[3]))
+            n = toolbox.voigt_cauchy_percentage(coeff[1], coeff[2])
+            print("toolbox: % cauchy/gauss in voigt", n, "/", 1 - n)
+
+        else:
+            self.curve_pseudovoigt.setData([0],[0])
 
 
 
@@ -299,11 +318,26 @@ class Main:
         # cauchy(x, x0, gamma)
         guess = [52*_keV, _keV, 1e-12]
         coeff, cov = curve_fit(toolbox.cauchy, energy, counts, p0 = guess)
+
+        return coeff
+
+    def fit_pseudovoigt(self,energy,counts):
+        """
+        Fits Pseudo-Voigt profile to the given data. Pseudo-Voigt is approximation with linear combination of Gauss and
+        Cauchy distributions. This method does not use convolution, but is accurate within 1%.
+        https://en.wikipedia.org/wiki/Voigt_profile
+        :param energy:
+        :param counts:
+        :return:
+        """
+        # pseudo_voigt(x, x0, var, gamma, a=1)
+        guess = [52 * _keV, _keV**2, _keV, 1e-12]
+        coeff, cov = curve_fit(toolbox.pseudo_voigt, energy, counts, p0=guess)
         return coeff
 
     def compare_to_excepted(self):
         """
-        Prints measured energies and theoretically predicted energies
+        Plots measured energies and theoretically predicted energies
         :return:
         """
 
@@ -311,36 +345,54 @@ class Main:
         a = self.energy_range_indx[0]
         b = self.energy_range_indx[1]
 
-        # Problem: expected values are two orders of magnitude smaller than measured
-        #print("Angle, measured, excepted")
-
         measured = []
         excepted = []
-        cross_sections = []
 
         for i, meas in enumerate(self.measurement_list):
             energy = meas.energy
             count = meas.count / self.count_correction(self.energy)
+            # using Cauchy distribution instead of Voigt, because it seems to be more accurate
             coeff = self.fit_cauchy(energy[a:b], count[a:b])
 
-            measured_energy_maxium_keV = coeff[0] / _keV
-            excepted_energy_maxium_keV = toolbox.e_2f_fun(self.angles[i]*2*np.pi/360) / _keV
-            cross_section_arbitary = toolbox.klein_nishina(self.angles[i]*2*np.pi/360)
+            measured_energy_maxium_eV = coeff[0] / _eV
+            excepted_energy_maxium_eV = toolbox.e_2f_fun(self.angles[i]*2*np.pi/360) / _eV
 
-            measured.append(measured_energy_maxium_keV)
-            excepted.append(excepted_energy_maxium_keV)
-            cross_sections.append(cross_section_arbitary)
+            measured.append(measured_energy_maxium_eV)
+            excepted.append(excepted_energy_maxium_eV)
 
-            #print(self.angles[i], round(measured_energy_maxium_keV,4), round(excepted_energy_maxium_keV,4))
 
         # (measurement data and block-test at 80 degrees is omitted)
         self.curve_diff_measured.setData(self.angles[2:], measured[2:])
         self.curve_diff_expected.setData(self.angles[2:], excepted[2:])
-        self.curve_cross_section.setData(self.angles[2:], cross_sections[2:])
-        #self.plot_klein_nishina.setYRange(0,max(cross_sections))
+
+    def additional_analyzing(self):
+        """
+        Plots Klein-Nishina cross sections and Voigt Cauchy-fractions
+        :return:
+        """
+
+        # [a:b] is the range between which the mean square distribution fit is made.
+        a = self.energy_range_indx[0]
+        b = self.energy_range_indx[1]
+
+        cross_sections = []
+        cauchy_fractions = []
+
+        for i, meas in enumerate(self.measurement_list):
+            energy = meas.energy
+            count = meas.count / self.count_correction(self.energy)
+            coeff = self.fit_pseudovoigt(energy[a:b], count[a:b])
+
+            cross_section_arbitary = toolbox.klein_nishina(self.angles[i] * 2 * np.pi / 360)
+            cauchy_fraction = toolbox.voigt_cauchy_percentage(coeff[1],coeff[2])
+
+            cross_sections.append(cross_section_arbitary)
+            cauchy_fractions.append(cauchy_fraction)
 
 
-
+        # (measurement data and block-test at 80 degrees is omitted)
+        self.curve_cross_section.setData(self.angles[2:], cross_sections[2:]/max(cross_sections))
+        self.curve_cauchy_fraction.setData(self.angles[2:], cauchy_fractions[2:])
 
 def main():
     Main()

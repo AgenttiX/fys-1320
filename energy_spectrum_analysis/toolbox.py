@@ -125,3 +125,43 @@ def cauchy_cumulative(x, x0, gamma, a=1):
     :return:
     """
     return a/np.pi * np.arctan((x-x0)/gamma) + 0.5
+
+def pseudo_voigt(x, x0, var, gamma, a=1):
+    """
+    Pseudo-Voigt profile, is accurate to 1 % to regular Voigt
+    :param x:
+    :param x0: location parameter
+    :param var: Gauss parameter: variance
+    :param gamma: Caychy parameter: half-width at half maxium
+    :param a: coefficient in cases when distribution is not normalized
+    :return:
+    """
+    # if RunTimeWarnings are thrown, its because curvefitting does try negative numbers. Setting bounds >0 makes situation
+    # worse.
+    sigma = np.sqrt(var)
+    f_G = 2*sigma*np.sqrt(2*np.log(2))
+    f_L = 2*gamma
+
+    f = (f_G**5 + 2.69269*f_G**4*f_L + 2.42843*f_G**3*f_L**2 + 4.47163*f_G**2*f_L**3 + 0.07842*f_G*f_L**4 + f_L**5)**(1/5)
+
+    n = 1.36603*(f_L/f) - 0.47719*(f_L/f)**2 + 0.11116*(f_L/f)**3
+
+    V_p = n*cauchy(x,x0,gamma,a) + (1-n)*gauss(x,x0,var,a)
+
+    return V_p
+
+def voigt_cauchy_percentage(var, gamma):
+    """
+    Calculates the the amount of Cauchy in Voigt. This number not real thing, but more just intuitive evaluation
+    :param var: Gauss parameter: variance
+    :param gamma: Caychy parameter: half-width at half maxium
+    :return: fraction of Cauchy (0-1)
+    """
+    sigma = np.sqrt(var)
+    f_G = 2 * sigma * np.sqrt(2 * np.log(2))
+    f_L = 2 * gamma
+
+    f = (f_G ** 5 + 2.69269 * f_G ** 4 * f_L + 2.42843 * f_G ** 3 * f_L ** 2 + 4.47163 * f_G ** 2 * f_L ** 3 + 0.07842 * f_G * f_L ** 4 + f_L ** 5) ** (1 / 5)
+
+    n = 1.36603 * (f_L / f) - 0.47719 * (f_L / f) ** 2 + 0.11116 * (f_L / f) ** 3
+    return n
