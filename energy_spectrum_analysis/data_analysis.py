@@ -178,7 +178,7 @@ class Main:
         self.curve_diff_expected = self.plot_diff.plot(pen=pg.mkPen((70, 255, 170)), name="Laskettu energiamaksimi")
 
         self.curve_cross_section = self.plot_klein_nishina.plot(pen=pg.mkPen((70, 170, 255)), name="Siroamistodennäköisyys maksimista")
-        self.curve_cauchy_fraction = self.plot_cauchy_in_voigt.plot(pen=pg.mkPen(70, 255, 170), name="Cauchyn osuus Voigt:sta")
+        self.curve_cauchy_fraction = self.plot_cauchy_in_voigt.plot(pen=pg.mkPen((70, 170, 255)), name="Cauchyn osuus Voigt:sta")
 
 
         win.resize(1600, 900)
@@ -271,9 +271,6 @@ class Main:
         if (self.__fitPseudoVoigtCheckbox.checkState()):
             coeff = self.fit_pseudovoigt(self.energy[a:b], self.count[a:b])
             self.curve_pseudovoigt.setData(self.energy[a:b]/_eV, toolbox.pseudo_voigt(self.energy[a:b], coeff[0], coeff[1], coeff[2], coeff[3]))
-            n = toolbox.voigt_cauchy_percentage(coeff[1], coeff[2])
-            #print("toolbox: % cauchy/gauss in voigt", n, "/", 1 - n)
-
         else:
             self.curve_pseudovoigt.setData([0],[0])
 
