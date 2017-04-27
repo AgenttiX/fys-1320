@@ -28,7 +28,7 @@ h = 6.6260755e-34
 
 # Other constants
 
-# Most common energy for Am241 is unknown, for now let's use one from wikipedia:
+# Most common energy for Am241 is unknown, for now let's use one from Wikipedia:
 # https://en.wikipedia.org/wiki/Americium-241
 e_1f = 59.5409e3 * e
 
@@ -68,7 +68,6 @@ def klein_nishina(theta, E_init=e_1f):
     d_sigma_d_omega = alfa**2 * r_c**2 * P(theta)**2 * (P(theta) + 1/P(theta) -(np.sin(theta))**2) / 2
 
     return d_sigma_d_omega
-
 
 
 def gauss(x, mu, var, a=1):
@@ -126,6 +125,7 @@ def cauchy_cumulative(x, x0, gamma, a=1):
     """
     return a/np.pi * np.arctan((x-x0)/gamma) + 0.5
 
+
 def pseudo_voigt(x, x0, var, gamma, a=1):
     """
     Pseudo-Voigt profile, is accurate to 1 % to regular Voigt
@@ -149,6 +149,7 @@ def pseudo_voigt(x, x0, var, gamma, a=1):
     V_p = n*cauchy(x,x0,gamma,a) + (1-n)*gauss(x,x0,var,a)
 
     return V_p
+
 
 def voigt_cauchy_percentage(var, gamma):
     """

@@ -23,7 +23,10 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy.integrate import simps
 import toolbox
+
+import matplotlib.pyplot as plt
 
 
 # Constants
@@ -39,8 +42,8 @@ class Measurement:
         self.channel = b
         self.energy = (c[0]*b + c[1]) * _keV
 
-
-    def read_data(self, path_to_file):
+    @staticmethod
+    def read_data(path_to_file):
         """
         Reads .txt data files
         :param path_to_file:
@@ -167,6 +170,10 @@ class Main:
         win.nextRow()
         self.plot_cauchy_in_voigt = win.addPlot()#title="Cauchy in Voigt")
 
+        self.plot_int = win.addPlot()
+        self.plot_conv = win.addPlot()
+        self.plot_conv.setLogMode(x=True, y=None)
+
         self.set_labels()
         self.curve_count = self.plot_count.plot(self.measurement.energy/_eV, self.measurement.count,
                                                 pen=pg.mkPen((70, 170, 255)), name="Mittaus")
@@ -180,6 +187,12 @@ class Main:
         self.curve_cross_section = self.plot_klein_nishina.plot(pen=pg.mkPen((70, 170, 255)), name="Siroamistodennäköisyys maksimista")
         self.curve_cauchy_fraction = self.plot_cauchy_in_voigt.plot(pen=pg.mkPen((70, 170, 255)), name="Cauchyn osuus Voigt:sta")
 
+        # Integrals
+        self.curve_int_cauchy = self.plot_int.plot(pen=(85, 210, 45), name="Lorentz")
+        self.curve_int_raw = self.plot_int.plot(pen=(70, 170, 255), name="Mittausdata")
+
+        self.curve_conv_trap = self.plot_conv.plot(pen=(85, 210, 45), name="Puolisuunnikas")
+        self.curve_conv_simp = self.plot_conv.plot(pen=(70, 170, 255), name="Simpson")
 
         win.resize(1600, 900)
         # draws measured and compton-calculated figures
@@ -191,8 +204,8 @@ class Main:
         # PyQtGraph main loop
         qapp.exec_()
 
-
-    def read_to_list(self,angles):
+    @staticmethod
+    def read_to_list(angles):
         """
         Reads all single measurements to one list, notice that it also reads
         calibration- and block-measurements at angles 75 and 80 respectively.
@@ -222,14 +235,21 @@ class Main:
         self.plot_diff.setLabel("left", "E", "eV")
         self.plot_diff.setLabel("bottom", "kulma (°) ")
 
-        #self.plot_klein_nishina.addLegend()
+        # self.plot_klein_nishina.addLegend()
         self.plot_klein_nishina.setLabel("left", "Todennäköisyys (%)")
         self.plot_klein_nishina.setLabel("bottom", "kulma (°)")
 
-        #self.plot_cauchy_in_voigt.addLegend()
+        # self.plot_cauchy_in_voigt.addLegend()
         self.plot_cauchy_in_voigt.setLabel("left", "Osuus (%)")
         self.plot_cauchy_in_voigt.setLabel("bottom", "kulma (°)")
 
+        self.plot_int.addLegend()
+        self.plot_int.setLabel("left", "pinta-ala")
+        self.plot_int.setLabel("bottom", "mittaus")
+
+        self.plot_conv.addLegend()
+        self.plot_conv.setLabel("left", "pinta-ala")
+        self.plot_conv.setLabel("bottom", "osavälejä")
 
     def update_change(self):
         """
@@ -255,30 +275,91 @@ class Main:
         a = self.energy_range_indx[0]
         b = self.energy_range_indx[1]
 
+        print("----- Data analysis -----")
+        # print(self.measurement.count)
+        # print(self.measurement.energy)
+        # print(self.measurement.channel)
+
+        energy_vec = self.energy[a:b] * self.count[a:b]
+        # print(energy_vec)
+        print("Raw E sum:", np.sum(energy_vec))
+        print("Raw E trapz:", np.trapz(energy_vec))
+        print("Raw E simps:", simps(energy_vec))
+        print("Raw sum:", np.sum(self.count[a:b]))
+
         # Gauss
-        if (self.__fitGaussCheckbox.checkState()):
-            coeff = self.fit_gauss(self.energy[a:b],self.count[a:b])
-            self.curve_gauss.setData(self.energy[a:b]/_eV, toolbox.gauss(self.energy[a:b],coeff[0],coeff[1], coeff[2]))
+        if self.__fitGaussCheckbox.checkState():
+            coeff = self.fit_gauss(self.energy[a:b], self.count[a:b])
+            # print(coeff)
+            gauss = toolbox.gauss(self.energy[a:b], coeff[0], coeff[1], coeff[2])
+            # print(gauss)
+            self.curve_gauss.setData(self.energy[a:b]/_eV, gauss)
+
+            gauss_energy = self.energy[a:b] * gauss
+            print("Gauss E sum:", np.sum(gauss_energy))
+            print("Gauss E trapz:", np.trapz(gauss_energy))
+            print("Gauss E simps:", simps(gauss_energy))
+
+            print("Gauss sum:", np.sum(gauss))
+            print("Gauss trapz:", np.trapz(y=gauss, x=self.energy[a:b]))
+            print("Gauss simps:", simps(y=gauss, x=self.energy[a:b]))
+
+            print("Gauss int:", coeff[2])
+            # print("Gauss cumulative:", toolbox.gauss_cumulative(self.energy[b], coeff[0], coeff[1], coeff[2]))
+            # self.curve_test.setData(gauss)
+
         else:
-            self.curve_gauss.setData([0],[0])
+            self.curve_gauss.setData([0], [0])
+
         # Cauchy
-        if (self.__fitCauchyCheckbox.checkState()):
+        if self.__fitCauchyCheckbox.checkState():
             coeff = self.fit_cauchy(self.energy[a:b], self.count[a:b])
-            self.curve_cauchy.setData(self.energy[a:b]/_eV, toolbox.cauchy(self.energy[a:b], coeff[0], coeff[1], coeff[2]))
+            cauchy = toolbox.cauchy(self.energy[a:b], coeff[0], coeff[1], coeff[2])
+            print(self.energy[a])
+            print(self.energy[b])
+            print(coeff)
+            self.curve_cauchy.setData(self.energy[a:b]/_eV, cauchy)
+
+            cauchy_energy = self.energy[a:b] * cauchy
+            print("Cauchy E sum:", np.sum(cauchy_energy))
+            print("Cauchy E trapz:", np.trapz(cauchy_energy))
+            print("Cauchy E simps:", simps(cauchy_energy))
+
+            print("Cauchy sum:", np.sum(cauchy))
+            print("Cauchy trapz:", np.trapz(y=cauchy, x=self.energy[a:b]))
+            print("Cauchy simps:", simps(y=cauchy, x=self.energy[a:b]))
+
+            print("Cauchy total int:", coeff[2])
+            print("Cauchy int:", toolbox.cauchy_cumulative(self.energy[b], coeff[0], coeff[1], coeff[2]) - toolbox.cauchy_cumulative(self.energy[a], coeff[0], coeff[1], coeff[2]))
+            # self.curve_cauchy.setData(self.energy[a:b]/_eV, toolboxASDFASDFSA)
         else:
-            self.curve_cauchy.setData([0],[0])
+            self.curve_cauchy.setData([0], [0])
+
         # Pseudo Voigt
-        if (self.__fitPseudoVoigtCheckbox.checkState()):
+        if self.__fitPseudoVoigtCheckbox.checkState():
             coeff = self.fit_pseudovoigt(self.energy[a:b], self.count[a:b])
-            self.curve_pseudovoigt.setData(self.energy[a:b]/_eV, toolbox.pseudo_voigt(self.energy[a:b], coeff[0], coeff[1], coeff[2], coeff[3]))
+            pseudo_voigt = toolbox.pseudo_voigt(self.energy[a:b], coeff[0], coeff[1], coeff[2], coeff[3])
+            self.curve_pseudovoigt.setData(self.energy[a:b]/_eV, pseudo_voigt)
+
+            pseudo_voigt_energy = self.energy[a:b] * pseudo_voigt
+            print("Pseudo Voigt E sum:", np.sum(pseudo_voigt_energy))
+            print("Pseudo Voigt E trapz:", np.trapz(y=pseudo_voigt_energy, x=self.energy[a:b]))
+            print("Pseudo Voigt E simps:", simps(y=pseudo_voigt_energy, x=self.energy[a:b]))
+
+            print("Pseudo Voigt sum:", np.sum(pseudo_voigt))
+            print("Pseudo Voigt trapz:", np.trapz(y=pseudo_voigt, x=self.energy[a:b]))
+            print("Pseudo Voigt simps:", simps(y=pseudo_voigt, x=self.energy[a:b]))
+
+            print("Pseudo Voigt int:", coeff[3])
         else:
-            self.curve_pseudovoigt.setData([0],[0])
-
-
+            self.curve_pseudovoigt.setData([0], [0])
 
         self.curve_count.setData(self.energy/_eV, self.count)
 
-    def count_correction(self,energy):
+        print("-----")
+
+    @staticmethod
+    def count_correction(energy):
         """
         Returns efficiency factors for energies measured by XR100CR x-ray detector.
         Assumin 500e-6m thick Si-detector and only concidering range of 3-70 keV
@@ -301,7 +382,8 @@ class Main:
                     break
         return factor
 
-    def fit_gauss(self,energy,counts):
+    @staticmethod
+    def fit_gauss(energy,counts):
         """
         Fits non-linear least squares gauss-fit for scattered peak.
         :param energy: energy-vector
@@ -313,7 +395,8 @@ class Main:
         coeff, cov = curve_fit(toolbox.gauss, energy, counts, p0 = guess)
         return coeff
 
-    def fit_cauchy(self,energy,counts):
+    @staticmethod
+    def fit_cauchy(energy,counts):
         """
         Fits non-linear least squares cauchy-fit for scattered peak.
         :param energy: energy-vector
@@ -326,7 +409,8 @@ class Main:
 
         return coeff
 
-    def fit_pseudovoigt(self,energy,counts):
+    @staticmethod
+    def fit_pseudovoigt(energy,counts):
         """
         Fits Pseudo-Voigt profile to the given data. Pseudo-Voigt is approximation with linear combination of Gauss and
         Cauchy distributions. This method does not use convolution, but is accurate within 1%.
@@ -398,8 +482,72 @@ class Main:
         self.curve_cross_section.setData(self.angles[2:], cross_sections[2:])
         self.curve_cauchy_fraction.setData(self.angles[2:], cauchy_fractions[2:])
 
+        # ASDFASDF
+        analyticals = []
+        numerics = []
+        print("----- Cauchy integrals -----")
+        for i, meas in enumerate(self.measurement_list):
+            count = meas.count / self.count_correction(meas.energy)
+            coeff = self.fit_cauchy(meas.energy[a:b], count[a:b])
+
+            # cauchy = toolbox.cauchy(self.energy[a:b], coeff[0], coeff[1], coeff[2])
+
+            cauchy = toolbox.cauchy_cumulative(meas.energy[b], coeff[0], coeff[1], coeff[2]) - toolbox.cauchy_cumulative(
+                      meas.energy[a], coeff[0], coeff[1], coeff[2])
+
+            raw = np.trapz(y=count[a:b], x=meas.energy[a:b])
+
+            print("Raw", raw)
+            print("Cauchy", cauchy)
+            analyticals.append(cauchy)
+            numerics.append(raw)
+
+        print("-----")
+
+        self.curve_int_cauchy.setData(self.angles[2:], analyticals[2:])
+        self.curve_int_raw.setData(self.angles[2:], numerics[2:])
+
+        meas = self.measurement_list[2]
+        count = meas.count / self.count_correction(meas.energy)
+        print("Exact:", analyticals[2])
+
+        a = self.energy_range_indx[0]
+        b = self.energy_range_indx[1]
+        print(a, b)
+
+        # stepcounts = [10]
+        stepcounts = np.logspace(1, 3, num=1000)
+
+        trapzs = []
+        simpss = []
+
+        cauchy_params = self.fit_cauchy(meas.energy[a:b], count[a:b])
+        # OK
+        # print(cauchy_params)
+
+        a = 6.08859964548e-15
+        b = 9.3720685487e-15
+
+        for i_stepcount, stepcount in enumerate(stepcounts):
+            x = np.arange(start=float(a), stop=float(b), step=float((b - a) / stepcount))
+
+            cauchy_vec = toolbox.cauchy(x, cauchy_params[0], cauchy_params[1], cauchy_params[2])
+
+            trapz = np.trapz(y=cauchy_vec, x=x)
+            trapzs.append(trapz)
+            simp = simps(y=cauchy_vec, x=x)
+            simpss.append(simp)
+
+            print(trapz)
+            print(simp)
+
+        self.curve_conv_trap.setData(stepcounts, trapzs)
+        self.curve_conv_simp.setData(stepcounts, simpss)
+
+        print("-----")
+
+
 def main():
     Main()
-
 
 main()
