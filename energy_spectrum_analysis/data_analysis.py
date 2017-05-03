@@ -454,6 +454,21 @@ class Main:
         self.curve_diff_measured.setData(self.angles[2:], measured[2:])
         self.curve_diff_expected.setData(self.angles[2:], excepted[2:])
 
+
+
+    def interpolate(self,vec_x,vec_y):
+        vec_size = 10*len(vec_x)
+        new_vec_x = np.arange(vec_x[0],vec_x[-1],float((vec_x[-1]-vec_x[0])/vec_size))
+        new_vec_y = np.zeros(vec_size)
+
+        for i, x in enumerate(new_vec_x):
+            for j in range(len(vec_x)-1):
+                if (vec_x[j] <= x and x < vec_x[j+1]):
+                    new_vec_y[i] = (vec_y[j+1]-vec_y[j])/(vec_x[j+1]-vec_x[j]) * (x-vec_x[j]) + vec_y[j]
+                    break
+
+        return new_vec_x, new_vec_y
+
     def additional_analyzing(self):
         """
         Plots Klein-Nishina cross sections and Voigt Cauchy-fractions
@@ -504,6 +519,23 @@ class Main:
 
         print("-----")
 
+        interpolated_angle, interpolated_raw = self.interpolate(self.angles[2:],numerics[2:])
+        interpolated_angle, interpolated_cauchy = self.interpolate(self.angles[2:], analyticals[2:])
+
+        c, d = np.argmin(np.abs(interpolated_angle-117)) , np.argmin(np.abs(interpolated_angle-141))
+
+        area_raw = np.trapz(y=interpolated_raw, x=interpolated_angle)
+        area_cauchy = np.trapz(y=interpolated_cauchy, x=interpolated_angle)
+        area_raw_117_141 = np.trapz(y=interpolated_raw[c:d], x=interpolated_angle[c:d])
+        area_cauchy_117_141 = np.trapz(y=interpolated_cauchy[c:d], x=interpolated_angle[c:d])
+
+        print("Raw: area in 117-141 / total area: ", area_raw_117_141, "/", area_raw, "=", area_raw_117_141/area_raw)
+        print("Cauchy: area in 117-141 / total area: ", area_cauchy_117_141, "/", area_cauchy, "=", area_cauchy_117_141/area_cauchy)
+
+
+
+
+
         self.curve_int_cauchy.setData(self.angles[2:], analyticals[2:])
         self.curve_int_raw.setData(self.angles[2:], numerics[2:])
 
@@ -538,8 +570,8 @@ class Main:
             simp = simps(y=cauchy_vec, x=x)
             simpss.append(simp)
 
-            print(trapz)
-            print(simp)
+            #print(trapz)
+            #print(simp)
 
         self.curve_conv_trap.setData(stepcounts, trapzs)
         self.curve_conv_simp.setData(stepcounts, simpss)
