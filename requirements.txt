@@ -1,0 +1,7 @@
+matplotlib
+numpy
+nptdms
+plotly
+pyqtgraph
+PySide2
+scipy
