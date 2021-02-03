@@ -6,18 +6,16 @@
 # However, the license of the example code our work is based on is unclear and thereby so is the license
 # for those parts of this code that are based on it
 
+# pylint: disable=wrong-import-order
 import toolbox
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-"""
-This code calculates extinction (absorption) of cloud gas by function of water droplet particle size
-
-"""
+# This code calculates extinction (absorption) of cloud gas by function of water droplet particle size
 
 N = 10000*10e6      # assuming number concentration of 10000/cm^3 --> 10^9/m^3
 L = 1               # length of a pipe, assuming "about a meter" is a meter (Opintomoniste)
-
 
 m = 1.33 + 0.001j
 lambda_var = 635

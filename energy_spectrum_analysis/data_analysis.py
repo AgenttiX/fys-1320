@@ -4,15 +4,13 @@
 # This program is for analysing data gathered from spectrometer in Compton
 # energy spectrum analyis -physics experiment.
 
+import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
-import numpy as np
 from scipy.optimize import curve_fit
 from scipy.integrate import simps
+
 import toolbox
-
-import matplotlib.pyplot as plt
-
 
 # Constants
 _eV = 1.60218e-19
@@ -46,17 +44,17 @@ class Measurement:
         # Skips to correct line, and determines wheter it is calibration data or calibrated data
         calibration = False
         for x in range(10):
-            if (file.readline() == "Channel\tValue\n"):
+            if file.readline() == "Channel\tValue\n":
                 calibration = False
                 break
-            if (file.readline() =="Channel\tData\n"):
+            if file.readline() == "Channel\tData\n":
                 calibration = True
                 break
-            if (x==9):
+            if x == 9:
                 raise "malformed txt-file"
 
         # Calibrated data:
-        if (calibration == False):
+        if not calibration:
             # Reads channel-value calibration-pairs (unused)
             calibration = []
             for x in range(3):
@@ -71,7 +69,7 @@ class Measurement:
                 line = file.readline()
 
         # Calibration data:
-        if (calibration == True):
+        if calibration:
             line = file.readline()
             # in case of calibration data coefficients are set to match others
             coefficients = [0.0223487, -0.0131686]
@@ -79,7 +77,7 @@ class Measurement:
         # Reads the vectors
         channel_list = []   # "Channel"
         count_list = []     # "Data"
-        while (line != ""):
+        while line != "":
             channel, count = line.split()
             channel_list.append(int(channel))
             count_list.append(int(count))
@@ -90,13 +88,6 @@ class Measurement:
         count_array= np.array(count_list)
 
         return count_array, channel_array, coefficients
-
-
-
-
-
-
-
 
 
 class Main:
@@ -111,11 +102,8 @@ class Main:
         self.energy = self.measurement.energy
         self.energy_range_indx = [np.argmin(np.abs(self.energy-38*_keV)), np.argmin(np.abs(self.energy-58.5*_keV))]
 
-
-
         self.selected_angle = 105
         self.correction = False
-
 
         # Control window
         widget2 = QtGui.QWidget()
@@ -145,7 +133,6 @@ class Main:
         self.__updateButton.clicked.connect(self.update_change)
 
         widget2.show()
-
 
         # Graph window
         win = pg.GraphicsWindow(title="Energy spectrum data analysis")
@@ -185,7 +172,6 @@ class Main:
         # draws Klein-Nishina cross sections and voigt cauchy fractions
         self.additional_analyzing()
 
-
         # PyQtGraph main loop
         qapp.exec_()
 
@@ -199,11 +185,11 @@ class Main:
         """
         measurements = []
         for angle in angles:
-            if (angle!=75 and angle!=80):
+            if angle not in [75, 80]:
                 measurements.append(Measurement("data/" + str(angle) + ".txt"))
-            elif (angle==75):
+            elif angle == 75:
                 measurements.append(Measurement("data/calibration.txt"))
-            elif (angle==80):
+            elif angle == 80:
                 measurements.append(Measurement("data/block-80.txt"))
         return measurements
 
@@ -249,7 +235,7 @@ class Main:
         if self.selected_angle in self.angles:
             self.measurement = self.measurement_list[self.angles.index(self.selected_angle)]
             self.energy = self.measurement.energy
-            if (self.correction):
+            if self.correction:
                 self.count = self.measurement.count / self.count_correction(self.energy)
             else:
                 self.count = self.measurement.count
@@ -439,9 +425,8 @@ class Main:
         self.curve_diff_measured.setData(self.angles[2:], measured[2:])
         self.curve_diff_expected.setData(self.angles[2:], excepted[2:])
 
-
-
-    def interpolate(self,vec_x,vec_y):
+    @staticmethod
+    def interpolate(vec_x, vec_y):
         vec_size = 10*len(vec_x)
         new_vec_x = np.arange(vec_x[0],vec_x[-1],float((vec_x[-1]-vec_x[0])/vec_size))
         new_vec_y = np.zeros(vec_size)
@@ -555,8 +540,8 @@ class Main:
             simp = simps(y=cauchy_vec, x=x)
             simpss.append(simp)
 
-            #print(trapz)
-            #print(simp)
+            # print(trapz)
+            # print(simp)
 
         self.curve_conv_trap.setData(stepcounts, trapzs)
         self.curve_conv_simp.setData(stepcounts, simpss)
@@ -564,7 +549,5 @@ class Main:
         print("-----")
 
 
-def main():
+if __name__ == "__main__":
     Main()
-
-main()

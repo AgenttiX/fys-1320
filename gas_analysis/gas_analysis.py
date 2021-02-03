@@ -4,33 +4,12 @@
 # It is based on code which we wrote on Octave, and that code in
 # turn is somewhat based on the example code of the course.
 
-# Copyright Mika "AgenttiX" Mäki and Alpi Tolvanen, 2016
-
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+import csv
 
 import numpy as np
-# import numpy.linalg
-import csv
-import scipy.io
-
 from pyqtgraph.Qt import QtGui
 import pyqtgraph as pg
-
-# import matplotlib.pyplot as plt
-# import mpl_toolkits.mplot3d
+import scipy.io
 
 
 def readfile(path, filename):
@@ -130,7 +109,13 @@ class MatrixComputer:
         # Gas matrix creation
         # The file "kaasut_carbon.mat" is provided in the course materials
         abs_dict = scipy.io.loadmat("vectors/kaasut_carbon.mat")
-        abs_mat = np.array([abs_dict["H2O"][:, 0], abs_dict["CO2"][:, 0], abs_dict["CO"][:, 0], abs_dict["CH4"][:, 0], abs_dict["C2H2"][:, 0]])
+        abs_mat = np.array([
+            abs_dict["H2O"][:, 0],
+            abs_dict["CO2"][:, 0],
+            abs_dict["CO"][:, 0],
+            abs_dict["CH4"][:, 0],
+            abs_dict["C2H2"][:, 0]
+        ])
         abs_mat *= 1e-4
         lambda_vec = abs_dict["lambda"][:, 0]
 
@@ -176,7 +161,8 @@ class MatrixComputer:
         """
 
         # It was necessary to change 1e-2 to 1e-6 from Octave, reason unknown.
-        b_vec = (1 - sample.I_norm / reference.I_norm) * np.sum(self.__filter_mat * np.array([[self.__dlambda] * self.filtercount]) * 1e-6, axis=2)[0]
+        b_vec = (1 - sample.I_norm / reference.I_norm) * \
+            np.sum(self.__filter_mat * np.array([[self.__dlambda] * self.filtercount]) * 1e-6, axis=2)[0]
 
         return np.linalg.lstsq(self.__A, b_vec)
 
@@ -330,4 +316,6 @@ def main():
     # Pyqtgraph loop
     app.exec_()
 
-main()
+
+if __name__ == "__main__":
+    main()

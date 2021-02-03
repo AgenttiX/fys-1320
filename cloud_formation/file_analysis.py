@@ -17,6 +17,7 @@ class TDMS_Measurement:
         # Read the TDMS file
         tdms_file = nptdms.TdmsFile(path)
         # The group and channel names have been reverse engineered using a hex editor
+        # pylint: disable=no-member
         tdms_p_diff = tdms_file.object("GroupName", "Paine_ero_kPa")
         tdms_p_abs = tdms_file.object("GroupName", "Absoluuttipaine_kPa")
         tdms_ext = tdms_file.object("GroupName", "Light extinction_V")
@@ -129,7 +130,5 @@ class Main:
             tdms_file.group_channels(group)
 
 
-def main():
+if __name__ == "__main__":
     Main()
-
-main()

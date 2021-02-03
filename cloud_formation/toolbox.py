@@ -14,6 +14,7 @@
 # It also requires the example code files to be in the same folder as this file
 
 # Must be imported first to prevent errors
+# pylint: disable=wrong-import-order
 import matlab.engine
 
 import numpy as np
@@ -154,23 +155,21 @@ def mie(m, x):
     # The Mie.m fits this description quite nicely, so we didn't bother translating it to Python
     # https://xkcd.com/1513/
 
-    """
     # Avoid singularity at x=0
-    if x == 0:
-        return [np.real(m), np.imag(m), 0, 0, 0, 0, 0, 0, 1.5]
-    elif x > 0:
-        nmax = round(2+x+4*(x**(1/3)))
-        n1 = nmax -1
-
-        n = np.arange(1, nmax+1)
-        cn = 2*n+1
-        c1n = n*(n+2) / (n+1)
-        c2n = cn / n / (n+1)
-
-        x2 = x*x
-
-        #  TODO
-    """
+    # if x == 0:
+    #     return [np.real(m), np.imag(m), 0, 0, 0, 0, 0, 0, 1.5]
+    # elif x > 0:
+    #     nmax = round(2+x+4*(x**(1/3)))
+    #     n1 = nmax -1
+    #
+    #     n = np.arange(1, nmax+1)
+    #     cn = 2*n+1
+    #     c1n = n*(n+2) / (n+1)
+    #     c2n = cn / n / (n+1)
+    #
+    #     x2 = x*x
+    #
+    #     # TODO
 
     return matlabeng.Mie(complex(m), float(x))[0]
 

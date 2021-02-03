@@ -3,10 +3,10 @@
 # This program creates a 3D graph of Monte-Carlo integral error as a function of both the point and step counts
 
 import toolbox
+
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.random
-import matplotlib.pyplot as plt
-
 import plotly.offline
 import plotly.graph_objs as go
 

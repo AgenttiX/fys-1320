@@ -1,14 +1,12 @@
 # Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 
-
+# pylint: disable=wrong-import-order
 import toolbox
-import numpy as np
+
 import time
 
-# PyQtGraph is in Ubuntu repositories as python3-pyqtgraph
-# http://www.pyqtgraph.org/
+import numpy as np
 import pyqtgraph as pg
-
 
 # This is a value computed from our student numbers
 studnum_a = 3
@@ -66,12 +64,14 @@ P_df_vec = toolbox.saturation_pressure(T_i, water_a, water_b, water_c) * (p_f_ve
 
 plot_p_s_by_p_f = win.addPlot()
 plot_p_s_by_p_f.addLegend()
-plot_p_s_by_p_f.plot(p_f_vec, p_sf_vec, pen=pg.mkPen((255,0,0), width=1.5), name='Kylläinen höyrynpaine p_s')# Norm<span id="vertical-align: sub;">Sub</span>')
-plot_p_s_by_p_f.plot(p_f_vec, P_df_vec, pen=pg.mkPen((0,255,0), width=1.5), name='Höyryn osapaine p_d')# Norm<span id="vertical-align: sub;">Sub</span>')
-                                                                                                        #ylä ja alaindeksien säätäminen ei onnistunut
-plot_p_s_by_p_f.setLabel("left", "pₛ", "Pa")
-plot_p_s_by_p_f.setLabel("bottom","P_f", "Pa")
+# Norm<span id="vertical-align: sub;">Sub</span>')
+plot_p_s_by_p_f.plot(p_f_vec, p_sf_vec, pen=pg.mkPen((255, 0, 0), width=1.5), name='Kylläinen höyrynpaine p_s')
+# Norm<span id="vertical-align: sub;">Sub</span>')
+# ylä ja alaindeksien säätäminen ei onnistunut
+plot_p_s_by_p_f.plot(p_f_vec, P_df_vec, pen=pg.mkPen((0, 255, 0), width=1.5), name='Höyryn osapaine p_d')
 
+plot_p_s_by_p_f.setLabel("left", "pₛ", "Pa")
+plot_p_s_by_p_f.setLabel("bottom", "P_f", "Pa")
 
 
 # PyQtPlot main loop for graphs

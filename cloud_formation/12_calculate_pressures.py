@@ -4,10 +4,10 @@
 This file computes required initial pressures for twelve particles on range 6 - 200nm.
 """
 
-
+# pylint: disable=wrong-import-order
 import toolbox
-import numpy as np
 
+import numpy as np
 
 
 # Constants
@@ -22,10 +22,7 @@ water_a = 10.23
 water_b = 1750
 water_c = 38
 
-
 final_pressure = 99000  # Pa
-
-
 
 
 # 12 Particle sizes to compute initial pressures
@@ -35,10 +32,10 @@ print(np.round(particle_sizes*1e9, decimals=1))
 print("")
 
 
-#
 def particle_diameter_withvalues(p_i):
     return toolbox.minimum_particle_diameter_2(p_i, final_pressure, temp, heat_capacity_ratio,
                                                water_a, water_b, water_c, m_mol, surface_tension, rho_wat)
+
 
 init_pressure_vec = np.arange(99050, 109000)
 min_dp_vec = particle_diameter_withvalues(init_pressure_vec)
@@ -52,6 +49,7 @@ print("Initial pressures for our 12 particles (Pa)")
 print(np.round(init_pressures_for_particles))
 
 print("Initial pressure for 5nm")
-print(np.interp(5e-9, np.flipud(min_dp_vec),
-                                         np.flipud(init_pressure_vec), left=-1, right=-2))
-
+print(np.interp(
+    5e-9, np.flipud(min_dp_vec),
+    np.flipud(init_pressure_vec), left=-1, right=-2
+))

@@ -3,8 +3,12 @@
 ## @package toolbox_2
 # This program serves as a collection of supplementary functions for data_analysis.py
 
-import toolbox  # To prevent Matlab from loading, comment this line and uncomment the line in simulate_extinction()
+# pylint: disable=wrong-import-order
+# To prevent Matlab from loading, comment this line and uncomment the line in simulate_extinction()
+import toolbox
+
 from math import factorial
+
 import numpy as np
 
 
@@ -82,8 +86,7 @@ def remove_noise(data, noise_reduction_number):
         return data
     if noise_reduction_number < 0:
         raise ValueError("Noise reduction can't be negative")
-    else:
-        return savitzky_golay(data, (noise_reduction_number * 50 + 1), 3) # window size 251, polynomial order 3
+    return savitzky_golay(data, (noise_reduction_number * 50 + 1), 3) # window size 251, polynomial order 3
 
 
 def flip_and_normalize(data):
@@ -94,17 +97,19 @@ def flip_and_normalize(data):
 
 def find_drop_index(data):
     """
-    Finds the index of beginning of the largest decline in vector. Intended for data=measurement.p_diff, in which the biggest
+    Finds the index of beginning of the largest decline in vector.
+    Intended for data=measurement.p_diff, in which the biggest
     difference drop indicates the moment of pressure release.
     :param data: type of array, works best for measurement.p_diff
     :return: index of the beginning of the pressure drop
     """
-    # This funtion finds the coarse index of biggest drop first, and then it fine tunes the index to the beginning of drop.
+    # This funtion finds the coarse index of biggest drop first,
+    # and then it fine tunes the index to the beginning of drop.
 
     # Finding the biggest decline with coarse method, this is done by iterating differences on some interval.
     index_skip = 200        # every single index is not tested for performance reasons,
     index_spacing = 500     # the time interval between which difference is tested
-    border_margin = np.int(index_spacing / index_skip) + 1  # for cropping off the ends of an array to avoid out_of_range
+    border_margin = np.int(index_spacing / index_skip) + 1  # for cropping the ends of an array to avoid out_of_range
     greatest_difference = -1
     index_of_greatest_diff = -1
 
@@ -145,7 +150,8 @@ def get_pressure_change(measurement):
     drop = find_drop_index(measurement.p_diff)
 
     final_pressure = np.mean(measurement.p_abs[drop + 6000: drop + 16000])
-    drop_height = np.mean(measurement.p_diff[drop - 6000: drop - 4000]) - np.mean(measurement.p_diff[drop + 4000: drop + 6000])
+    drop_height = np.mean(measurement.p_diff[drop - 6000: drop - 4000]) \
+        - np.mean(measurement.p_diff[drop + 4000: drop + 6000])
 
     initial_pressure = final_pressure + drop_height
 

@@ -25,6 +25,7 @@ class Measurement:
         # Read the TDMS file
         tdms_file = nptdms.TdmsFile(path)
         # The group and channel names have been reverse engineered using a hex editor
+        # pylint: disable=no-member
         tdms_p_diff = tdms_file.object("GroupName", "Paine_ero_kPa")
         tdms_p_abs = tdms_file.object("GroupName", "Absoluuttipaine_kPa")
         tdms_ext = tdms_file.object("GroupName", "Light extinction_V")
@@ -120,7 +121,8 @@ class Main:
         self.__input_p_density.editingFinished.connect(self.update_change)
         layout.addWidget(self.__input_p_density, 6, 1)
 
-        self.__input_saturation_percentage = pg.SpinBox(value=self.saturation_percentage, int=True, minStep=1, step=1, min=0, max=100)
+        self.__input_saturation_percentage = pg.SpinBox(
+            value=self.saturation_percentage, int=True, minStep=1, step=1, min=0, max=100)
         self.__input_saturation_percentage.editingFinished.connect(self.update_change)
         layout.addWidget(self.__input_saturation_percentage, 7, 1)
 
@@ -133,12 +135,12 @@ class Main:
         # Graph window
         win = pg.GraphicsWindow(title="Cloud formation data analysis")
 
-        self.plot_select = win.addPlot()#title="Region selection")
-        self.plot_zoom = win.addPlot()#title="Zoom on selected region")
-        #self.plot_simulate = win.addPlot()#title="Simulation on particle growth")
+        self.plot_select = win.addPlot()  # title="Region selection")
+        self.plot_zoom = win.addPlot()  # title="Zoom on selected region")
+        # self.plot_simulate = win.addPlot()  # title="Simulation on particle growth")
         win.nextRow()
-        self.plot_distribution = win.addPlot()#title="Concentration distribtion")
-        self.plot_rotatometer = win.addPlot()#title="Rotatometer_fractions")
+        self.plot_distribution = win.addPlot()  # title="Concentration distribtion")
+        self.plot_rotatometer = win.addPlot()  # title="Rotatometer_fractions")
 
         self.plot_distribution.addLegend()
         self.plot_rotatometer.addLegend()
@@ -191,11 +193,11 @@ class Main:
 
         if not 1 <= self.meas_selected_number <= 17:  # In series 2 there's measurement 0, but that's a copy of the 8th
             raise ValueError
-        if not 0 <= self.noice_reduction_number:
+        if self.noice_reduction_number < 0:
             raise ValueError
-        if not 0 < self.particle_size_number:
+        if self.particle_size_number <= 0:
             raise ValueError
-        if not 0 <= self.particle_density_number:
+        if self.particle_density_number < 0:
             raise ValueError
         if not 0 <= self.saturation_percentage <= 100:
             raise ValueError
@@ -213,7 +215,8 @@ class Main:
         elif self.selected_data == 2:
             self.data = toolbox_2.remove_noise(self.measurement.p_abs, self.noice_reduction_number)
         elif self.selected_data == 3:
-            self.data = toolbox_2.remove_noise(toolbox_2.flip_and_normalize(self.measurement.ext), self.noice_reduction_number)
+            self.data = toolbox_2.remove_noise(
+                toolbox_2.flip_and_normalize(self.measurement.ext), self.noice_reduction_number)
             self.plot_zoom.setYRange(-0.1, 1, padding=0)
         elif self.selected_data == 4:
             self.data = toolbox_2.remove_noise(self.measurement.ext, self.noice_reduction_number)
@@ -221,7 +224,8 @@ class Main:
             raise ValueError
 
         self.index_of_drop = toolbox_2.find_drop_index(self.measurement.p_diff)
-        time = self.measurement.time - self.measurement.time[self.index_of_drop]   # time vector starts from the beginning of pressure drop
+        # time vector starts from the beginning of pressure drop
+        time = self.measurement.time - self.measurement.time[self.index_of_drop]
 
         self.update_distribution()
 
@@ -230,10 +234,16 @@ class Main:
             self.curve_zoom = self.plot_zoom.plot(self.measurement.time, self.data)
             self.curve_simulate = self.plot_zoom.plot(pen=pg.mkPen((100, 255, 200)))
 
-            self.curve_distribution_cumulative = self.plot_distribution.plot(pen=pg.mkPen((100, 200, 255)), name="´   Kumulatiivinen pitoisuus", symbolBrush=(80, 160, 201), symbolPen='w')
-            self.curve_distribution = self.plot_distribution.plot(name="Pitoisuusjakauma", symbolBrush=(50, 50, 255), symbolPen='w')
-            self.curve_rotatometer = self.plot_rotatometer.plot(name="Mitattu pitoisuus", symbolBrush=(50, 50, 255), symbolPen='w')
-            self.curve_rotatometer_fit = self.plot_rotatometer.plot(pen=pg.mkPen((100, 255, 200)), name="´  Ideaalinen pitoisuus")
+            self.curve_distribution_cumulative = self.plot_distribution.plot(
+                pen=pg.mkPen((100, 200, 255)),
+                name="´   Kumulatiivinen pitoisuus",
+                symbolBrush=(80, 160, 201), symbolPen='w')
+            self.curve_distribution = self.plot_distribution.plot(
+                name="Pitoisuusjakauma", symbolBrush=(50, 50, 255), symbolPen='w')
+            self.curve_rotatometer = self.plot_rotatometer.plot(
+                name="Mitattu pitoisuus", symbolBrush=(50, 50, 255), symbolPen='w')
+            self.curve_rotatometer_fit = self.plot_rotatometer.plot(
+                pen=pg.mkPen((100, 255, 200)), name="´  Ideaalinen pitoisuus")
 
             self.first_update = False
         else:
@@ -435,8 +445,8 @@ class Main:
             self.plot_zoom.setLabel("left", "U", "V")
             self.plot_zoom.setLabel("bottom", "t", "s")
 
-        #self.plot_simulate.setLabel("left", "ext", "")
-        #self.plot_simulate.setLabel("bottom", "t", "s")
+        # self.plot_simulate.setLabel("left", "ext", "")
+        # self.plot_simulate.setLabel("bottom", "t", "s")
 
         self.plot_distribution.setLabel("left", "N ×10¹⁰ (#/m³)")
         self.plot_distribution.setLabel("bottom", "d_p", "m")

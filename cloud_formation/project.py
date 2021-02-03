@@ -15,7 +15,7 @@ Further information of the reasons behind our choice
 https://www.gnu.org/education/edu-why.html
 """
 
-
+# pylint: disable=wrong-import-order
 import toolbox
 import numpy as np
 import time
@@ -105,7 +105,11 @@ final_pressure = 99000  # Pa
 
 
 def particle_diameter_withvalues(p_i):
-    return toolbox.minimum_particle_diameter_2(p_i, final_pressure, temp, heat_capacity_ratio, water_a, water_b, water_c, m_mol, surface_tension, rho_wat)
+    return toolbox.minimum_particle_diameter_2(
+        p_i, final_pressure, temp, heat_capacity_ratio,
+        water_a, water_b, water_c,
+        m_mol, surface_tension, rho_wat)
+
 
 # Draw a figure
 init_pressure_vec = np.arange(99050, 100500)

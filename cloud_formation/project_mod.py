@@ -27,11 +27,12 @@ This version is modified from project.py so, that the figures are suitable for u
 """
 
 # This code uses the cloud formation toolbox we've developed
+# pylint: disable=wrong-import-order
 import toolbox
 
-import numpy as np
 import time
 
+import numpy as np
 # PyQtGraph is in Ubuntu repositories as python3-pyqtgraph
 # http://www.pyqtgraph.org/
 import pyqtgraph as pg
