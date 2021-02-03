@@ -13,9 +13,6 @@ Since both of us are familiar with Python and passionately hate MATLAB, we chose
 
 Further information of the reasons behind our choice
 https://www.gnu.org/education/edu-why.html
-
-Licensed with Creative Commons Attribution 4.0 International
-https://creativecommons.org/licenses/by/4.0/
 """
 
 

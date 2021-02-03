@@ -4,25 +4,9 @@
 # This program is for reverse engineering the TDMS -> TXT conversion process done by
 # the convert_TDMS_to_ASCII.exe of Tampere University of Technology student laboratory of physics
 
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-
 # npTDMS is a library for reading TDMS files created by LabVIEW
 # https://pypi.python.org/pypi/npTDMS/
 import nptdms
-
 import numpy as np
 import pyqtgraph as pg
 

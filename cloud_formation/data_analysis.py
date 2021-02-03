@@ -4,20 +4,6 @@
 # This program is for analysing data created by logger_software v2 of the cloud formation experiment
 # of the Tampere University of Technology student laboratory of physics
 
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 # toolbox_2 is a set of supplementary functions that have been developed together with this program
 import toolbox_2
 
