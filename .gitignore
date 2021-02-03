@@ -4,3 +4,5 @@
 *.idea/*
 venv
 
+# Files provided by the course organizers
+gas_analysis/vectors

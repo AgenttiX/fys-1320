@@ -5,7 +5,7 @@ This repository contains our analysis code for the
 course
 [FYS-1320 Methods in Physics](https://www.tuni.fi/studentsguide/curriculum/course-units/tut-cu-g-36085).
 
-The course is composed of three experiments, each of which has a pre-report and a seminar presentation. To prevent plagiarism, our measurement data, pre-reports and seminar presentations aren't publicly available.
+The course is composed of three experiments, each of which has a pre-report and a seminar presentation.
 
 We'd be delighted to see our code being used in the course materials. Please contact us if licensing changes are necessary.
 
