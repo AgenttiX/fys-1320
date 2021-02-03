@@ -1,13 +1,15 @@
-# fys-1320
-Tampere University of Technology FYS-1320 Methods in Physics
+# FYS-1320 Methods in Physics
+
+This repository contains our analysis code for the
+[Tampere University of Technology](https://en.wikipedia.org/wiki/Tampere_University_of_Technology)
+course
+[FYS-1320 Methods in Physics](https://www.tuni.fi/studentsguide/curriculum/course-units/tut-cu-g-36085).
 
 The course is composed of three experiments, each of which has a pre-report and a seminar presentation. To prevent plagiarism, our measurement data, pre-reports and seminar presentations aren't publicly available.
 
 We'd be delighted to see our code being used in the course materials. Please contact us if licensing changes are necessary.
 
-- [Course description in Finnish](http://www.tut.fi/opinto-opas/wwwoppaat/opas2016-2017/perus/laitokset/Fysiikka/FYS-1320.html)
-- [Course description in English](http://www.tut.fi/opinto-opas/wwwoppaat/opas2016-2017/kv/laitokset/Fysiikka/FYS-1326.html)
-- [Moodle page of the course](https://moodle2.tut.fi/course/view.php?id=7583)
+Mika Mäki & Alpi Tolvanen, 2016-2017
 
 
 ## Gas analysis
