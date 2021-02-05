@@ -24,11 +24,11 @@ class Measurement:
     def __init__(self, path):
         # Read the TDMS file
         tdms_file = nptdms.TdmsFile(path)
-        # The group and channel names have been reverse engineered using a hex editor
-        # pylint: disable=no-member
-        tdms_p_diff = tdms_file.object("GroupName", "Paine_ero_kPa")
-        tdms_p_abs = tdms_file.object("GroupName", "Absoluuttipaine_kPa")
-        tdms_ext = tdms_file.object("GroupName", "Light extinction_V")
+        # The group and channel names have been reverse engineered using a hex editor.
+        # With newer versions of npTDMS they can also be queried from the object.
+        tdms_p_diff = tdms_file["GroupName"]["Paine_ero_kPa"]
+        tdms_p_abs = tdms_file["GroupName"]["Absoluuttipaine_kPa"]
+        tdms_ext = tdms_file["GroupName"]["Light extinction_V"]
 
         # Extract data from the objects
         # The constants have been reverse engineered from convert_TDMS_to_ASCII.exe with file_analysis.py

@@ -17,10 +17,9 @@ class TDMS_Measurement:
         # Read the TDMS file
         tdms_file = nptdms.TdmsFile(path)
         # The group and channel names have been reverse engineered using a hex editor
-        # pylint: disable=no-member
-        tdms_p_diff = tdms_file.object("GroupName", "Paine_ero_kPa")
-        tdms_p_abs = tdms_file.object("GroupName", "Absoluuttipaine_kPa")
-        tdms_ext = tdms_file.object("GroupName", "Light extinction_V")
+        tdms_p_diff = tdms_file["GroupName"]["Paine_ero_kPa"]
+        tdms_p_abs = tdms_file["GroupName"]["Absoluuttipaine_kPa"]
+        tdms_ext = tdms_file["GroupName"]["Light extinction_V"]
 
         # Extract data from the objects
         self.p_diff = tdms_p_diff.data
@@ -126,8 +125,7 @@ class Main:
         groups = tdms_file.groups()
         for group in groups:
             print("Group:", group)
-            print("Channels:")
-            tdms_file.group_channels(group)
+            print("Channels:", group.channels())
 
 
 if __name__ == "__main__":
