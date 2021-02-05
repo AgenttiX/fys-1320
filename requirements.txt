@@ -1,3 +1,14 @@
+# Matlab Engine for Python is necessary for many of the scripts,
+# as we could not translate all of the model code to Python
+# due to the lack of documentation.
+# https://se.mathworks.com/help/matlab/matlab-engine-for-python.html
+# For Ubuntu the installation would be something like
+# cd /usr/local/MATLAB/R2020b/extern/engines/python
+# sudo python3 setup.py install
+# If you use a virtualenv, you may have to inherit global site-packages.
+
+# You will also have to copy the course codes to the project folder for Matlab to find them.
+
 matplotlib
 numpy
 nptdms
