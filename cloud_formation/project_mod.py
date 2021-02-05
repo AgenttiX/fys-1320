@@ -19,8 +19,7 @@ The problems mentioned here include
 Further information of the reasons behind our choice
 https://www.gnu.org/education/edu-why.html
 
-Licensed with Creative Commons Attribution 4.0 International
-https://creativecommons.org/licenses/by/4.0/
+Licensed with the MIT license
 
 This version is modified from project.py so, that the figures are suitable for use in our pre-report
 (black text on white background etc.)

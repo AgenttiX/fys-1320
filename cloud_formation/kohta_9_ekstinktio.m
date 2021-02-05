@@ -1,7 +1,6 @@
 % Mika "AgenttiX" Mäki & Alpi Tolvanen, 2017
 
-% Licensed with Creative Commons Attribution 4.0 International
-% https://creativecommons.org/licenses/by/4.0/
+% Licensed with the MIT license
 % However, the license of the example code our work is based on is unclear and thereby so is the license
 % for those parts of this code that are based on it
 
