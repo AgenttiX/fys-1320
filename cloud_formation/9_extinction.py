@@ -19,7 +19,7 @@ L = 1               # length of a pipe, assuming "about a meter" is a meter (Opi
 
 m = 1.33 + 0.001j
 lambda_var = 635
-dp = np.logspace(1,4,1000)
+dp = np.logspace(1, 4, 1000)
 
 Qext = np.zeros(dp.size)
 
