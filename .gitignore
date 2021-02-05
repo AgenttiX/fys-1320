@@ -6,3 +6,17 @@ venv
 
 # Files provided by the course organizers
 gas_analysis/vectors
+ESIMERKKI_EKSTINKTIOTEHOKKUUS.m
+ESIMERKKI_dp.m
+ESIMERKKI_interp.m
+FuchsSutugin.m
+Mie.m
+RatkaiseKasvu.m
+dp_growth_rate.m
+droplet_temp.m
+dyKasvu.m
+free_path.m
+kelvin_ratio.m
+mie_abcd.m
+p_growth_rate.m
+water_pvap.m
